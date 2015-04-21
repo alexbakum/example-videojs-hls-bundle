@@ -1,0 +1,15 @@
+{
+  "name": "videojs-hls-bundle",
+  "version": "0.0.1",
+  "description": "Just a todo demo for gulp+browserify videojs and videojs-contrib-hls bundling",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander Bakum <nnm2006medved@gmail.com>",
+  "license": "WTFPL",
+  "dependencies": {
+    "video.js": "^4.12.5",
+    "videojs-contrib-hls": "^0.13.0"
+  }
+}
