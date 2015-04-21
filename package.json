@@ -9,7 +9,90 @@
   "author": "Alexander Bakum <nnm2006medved@gmail.com>",
   "license": "WTFPL",
   "dependencies": {
+    "pkcs7": "^0.2.3",
     "video.js": "^4.12.5",
-    "videojs-contrib-hls": "^0.13.0"
+    "videojs-contrib-hls": "^0.13.0",
+    "videojs-contrib-media-sources": "^0.3.1",
+    "videojs-swf": "^4.6.0"
+  },
+  "devDependencies": {
+    "browserify": "^9.0.8",
+    "browserify-shim": "^3.8.5",
+    "gulp": "^3.8.11",
+    "gulp-util": "^3.0.4",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "video.js": "videojs",
+    "./node_modules/videojs-contrib-hls/src/videojs-hls.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    ".node_modules/videojs-contrib-hls/src/stream.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/flv-tag.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/exp-golomb.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/h264-stream.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/aac-stream.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/metadata-stream.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/segment-parser.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/xhr.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/playlist-loader.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-hls/src/decrypter.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "./node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    }
   }
 }
