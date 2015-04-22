@@ -27,69 +27,84 @@
       "browserify-shim"
     ]
   },
+  "browser": {
+    "contrib/hls/videojs-hls": "./node_modules/videojs-contrib-hls/src/videojs-hls.js",
+    "contrib/hls/stream": "./node_modules/videojs-contrib-hls/src/stream.js",
+    "contrib/hls/flv-tag": "./node_modules/videojs-contrib-hls/src/flv-tag.js",
+    "contrib/hls/exp-golomb": "./node_modules/videojs-contrib-hls/src/exp-golomb.js",
+    "contrib/hls/h264-stream": "./node_modules/videojs-contrib-hls/src/h264-stream.js",
+    "contrib/hls/aac-stream": "./node_modules/videojs-contrib-hls/src/aac-stream.js",
+    "contrib/hls/metadata-stream": "./node_modules/videojs-contrib-hls/src/metadata-stream.js",
+    "contrib/hls/segment-parser": "./node_modules/videojs-contrib-hls/src/segment-parser.js",
+    "contrib/hls/m3u8/m3u8-parser": "./node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js",
+    "contrib/hls/xhr": "./node_modules/videojs-contrib-hls/src/xhr.js",
+    "contrib/hls/playlist-loader": "./node_modules/videojs-contrib-hls/src/playlist-loader.js",
+    "contrib/hls/decrypter": "./node_modules/videojs-contrib-hls/src/decrypter.js",
+    "contrib/media-sources": "./node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js"
+  },
   "browserify-shim": {
     "video.js": "videojs",
-    "./node_modules/videojs-contrib-hls/src/videojs-hls.js": {
+    "contrib/hls/videojs-hls": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    ".node_modules/videojs-contrib-hls/src/stream.js": {
+    "contrib/hls/stream": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/flv-tag.js": {
+    "contrib/hls/flv-tag": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/exp-golomb.js": {
+    "contrib/hls/exp-golomb": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/h264-stream.js": {
+    "contrib/hls/h264-stream": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/aac-stream.js": {
+    "contrib/hls/aac-stream": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/metadata-stream.js": {
+    "contrib/hls/metadata-stream": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/segment-parser.js": {
+    "contrib/hls/segment-parser": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js": {
+    "contrib/hls/m3u8/m3u8-parser": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/xhr.js": {
+    "contrib/hls/xhr": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/playlist-loader.js": {
+    "contrib/hls/playlist-loader": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-hls/src/decrypter.js": {
+    "contrib/hls/decrypter": {
       "depends": [
         "video.js:videojs"
       ]
     },
-    "./node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js": {
+    "contrib/media-sources": {
       "depends": [
         "video.js:videojs"
       ]

@@ -1,18 +1,18 @@
 var vjs = require('video.js');
-var pkcs7 = require('pkcs7');
-global.pkcs7 = pkcs7;
-require('../../node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js');
-require('../../node_modules/videojs-contrib-hls/src/videojs-hls.js');
-require('../../node_modules/videojs-contrib-hls/src/stream.js');
-require('../../node_modules/videojs-contrib-hls/src/flv-tag.js');
-require('../../node_modules/videojs-contrib-hls/src/exp-golomb.js');
-require('../../node_modules/videojs-contrib-hls/src/h264-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/aac-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/metadata-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/segment-parser.js');
-require('../../node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js');
-require('../../node_modules/videojs-contrib-hls/src/xhr.js');
-require('../../node_modules/videojs-contrib-hls/src/playlist-loader.js');
-require('../../node_modules/videojs-contrib-hls/src/decrypter.js');
+global.pkcs7 = require('pkcs7');
+
+require('contrib/media-sources');
+require('contrib/hls/videojs-hls');
+require('contrib/hls/stream');
+require('contrib/hls/flv-tag');
+require('contrib/hls/exp-golomb');
+require('contrib/hls/h264-stream');
+require('contrib/hls/aac-stream');
+require('contrib/hls/metadata-stream');
+require('contrib/hls/segment-parser');
+require('contrib/hls/m3u8/m3u8-parser');
+require('contrib/hls/xhr');
+require('contrib/hls/playlist-loader');
+require('contrib/hls/decrypter');
 
 module.exports = vjs;

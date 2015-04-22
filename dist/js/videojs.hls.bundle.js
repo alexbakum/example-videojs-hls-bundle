@@ -1,25 +1,25 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
 var vjs = require('video.js');
-var pkcs7 = require('pkcs7');
-global.pkcs7 = pkcs7;
-require('../../node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js');
-require('../../node_modules/videojs-contrib-hls/src/videojs-hls.js');
-require('../../node_modules/videojs-contrib-hls/src/stream.js');
-require('../../node_modules/videojs-contrib-hls/src/flv-tag.js');
-require('../../node_modules/videojs-contrib-hls/src/exp-golomb.js');
-require('../../node_modules/videojs-contrib-hls/src/h264-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/aac-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/metadata-stream.js');
-require('../../node_modules/videojs-contrib-hls/src/segment-parser.js');
-require('../../node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js');
-require('../../node_modules/videojs-contrib-hls/src/xhr.js');
-require('../../node_modules/videojs-contrib-hls/src/playlist-loader.js');
-require('../../node_modules/videojs-contrib-hls/src/decrypter.js');
+global.pkcs7 = require('pkcs7');
+
+require('contrib/media-sources');
+require('contrib/hls/videojs-hls');
+require('contrib/hls/stream');
+require('contrib/hls/flv-tag');
+require('contrib/hls/exp-golomb');
+require('contrib/hls/h264-stream');
+require('contrib/hls/aac-stream');
+require('contrib/hls/metadata-stream');
+require('contrib/hls/segment-parser');
+require('contrib/hls/m3u8/m3u8-parser');
+require('contrib/hls/xhr');
+require('contrib/hls/playlist-loader');
+require('contrib/hls/decrypter');
 
 module.exports = vjs;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../../node_modules/videojs-contrib-hls/src/aac-stream.js":6,"../../node_modules/videojs-contrib-hls/src/decrypter.js":7,"../../node_modules/videojs-contrib-hls/src/exp-golomb.js":8,"../../node_modules/videojs-contrib-hls/src/flv-tag.js":9,"../../node_modules/videojs-contrib-hls/src/h264-stream.js":10,"../../node_modules/videojs-contrib-hls/src/m3u8/m3u8-parser.js":11,"../../node_modules/videojs-contrib-hls/src/metadata-stream.js":12,"../../node_modules/videojs-contrib-hls/src/playlist-loader.js":13,"../../node_modules/videojs-contrib-hls/src/segment-parser.js":14,"../../node_modules/videojs-contrib-hls/src/stream.js":15,"../../node_modules/videojs-contrib-hls/src/videojs-hls.js":16,"../../node_modules/videojs-contrib-hls/src/xhr.js":17,"../../node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js":18,"pkcs7":3,"video.js":5}],2:[function(require,module,exports){
+},{"contrib/hls/aac-stream":6,"contrib/hls/decrypter":7,"contrib/hls/exp-golomb":8,"contrib/hls/flv-tag":9,"contrib/hls/h264-stream":10,"contrib/hls/m3u8/m3u8-parser":11,"contrib/hls/metadata-stream":12,"contrib/hls/playlist-loader":13,"contrib/hls/segment-parser":14,"contrib/hls/stream":15,"contrib/hls/videojs-hls":16,"contrib/hls/xhr":17,"contrib/media-sources":18,"pkcs7":3,"video.js":5}],2:[function(require,module,exports){
 /*
  * pkcs7.pad
  * https://github.com/brightcove/pkcs7
@@ -3359,6 +3359,10 @@ hls.FlvTag.frameTime = function(tag) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"video.js":5}],15:[function(require,module,exports){
+(function (global){
+
+; videojs = global.videojs = require("video.js");
+; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A lightweight readable stream implemention that handles event dispatching.
  * Objects that inherit from streams should call init in their constructors.
@@ -3435,7 +3439,10 @@ hls.FlvTag.frameTime = function(tag) {
   videojs.Hls.Stream = Stream;
 })(window.videojs);
 
-},{}],16:[function(require,module,exports){
+}).call(global, module, undefined, undefined);
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"video.js":5}],16:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
