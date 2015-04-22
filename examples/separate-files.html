@@ -3,20 +3,21 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-    <link rel="stylesheet" href="dist/css/video-js.min.css"/>
-    <script src="dist/js/vtt.min.js"></script>
+    <link rel="stylesheet" href="../dist/css/video-js.min.css"/>
+    <script src="../dist/js/videojs.js"></script>
+    <script src="../dist/js/videojs.hls.js"></script>
+    <script src="../dist/js/vtt.min.js"></script>
 </head>
 <body>
 <div>
     <video id="player" class="video-js vjs-default-skin"></video>
 </div>
-<script src="dist/js/videojs.hls.bundle.js"></script>
 <script>
     (function(w) {
         var player;
         var videojs = w.videojs;
 
-        videojs.options.flash.swf = 'dist/swf/video-js.swf';
+        videojs.options.flash.swf = '../dist/swf/video-js.swf';
         videojs('player', {}, function() {
             player = this;
             player.controls(true);

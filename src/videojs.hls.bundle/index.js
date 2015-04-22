@@ -1,3 +1,4 @@
+var vjs = require('video.js');
 global.pkcs7 = require('pkcs7');
 
 require('contrib/media-sources');
@@ -13,3 +14,5 @@ require('contrib/hls/m3u8/m3u8-parser');
 require('contrib/hls/xhr');
 require('contrib/hls/playlist-loader');
 require('contrib/hls/decrypter');
+
+module.exports = vjs;

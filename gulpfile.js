@@ -4,18 +4,34 @@ var source = require('vinyl-source-stream');
 var gutil = require('gulp-util');
 var path = require('path');
 
+gulp.task('js:videojs', function() {
+    return browserify()
+        .require(path.dirname(require.resolve('video.js')) + "/video.dev.js", {expose: 'video.js'})
+        .bundle()
+        .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(source('videojs.js'))
+        .pipe(gulp.dest('./dist/js'));
+});
+gulp.task('js:videojs-hls-standalone', function() {
+    return browserify('./src/videojs.hls/index.js')
+        .exclude('video.js')
+        .bundle()
+        .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(source('videojs.hls.js'))
+        .pipe(gulp.dest('./dist/js'));
+});
 gulp.task('js:videojs-bundle', function () {
-    browserify('./src/videojs.hls/index.js', {})
+    return browserify('./src/videojs.hls.bundle/index.js')
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.hls.bundle.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:copy-videojs-vtt.js', function() {
-    gulp.src(path.dirname(require.resolve('video.js')) + '/../../node_modules/vtt.js/dist/vtt.min.js')
+    return gulp.src(path.dirname(require.resolve('video.js')) + '/../../node_modules/vtt.js/dist/vtt.min.js')
         .pipe(gulp.dest('dist/js'));
 });
-gulp.task('js', ['js:videojs-bundle', 'js:copy-videojs-vtt.js']);
+gulp.task('js', ['js:videojs', 'js:videojs-hls-standalone', 'js:videojs-bundle', 'js:copy-videojs-vtt.js']);
 
 gulp.task('css:copy-videojs.min.css', function() {
     gulp.src(path.dirname(require.resolve('video.js')) + '/video-js.min.css')
