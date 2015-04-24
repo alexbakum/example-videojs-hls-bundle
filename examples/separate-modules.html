@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="../dist/css/videojs.ads.css"/>
     <link rel="stylesheet" href="../dist/css/videojs.ima.css"/>
 
+    <script src="../dist/js/vtt.min.js"></script>
     <script src="../dist/js/videojs.js"></script>
+    <script src="../dist/js/videojs.ga.js"></script>
     <script src="../dist/js/videojs.hls.js"></script>
     <script src="../dist/js/videojs.ads.ima.js"></script>
-    <script src="../dist/js/vtt.min.js"></script>
     <script src="https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js"></script>
 </head>
 <body>
@@ -20,27 +21,33 @@
 </div>
 <script>
     (function(w) {
-        var player;
         var videojs = w.videojs;
+        var player, sendBeacon;
 
         videojs.options.flash.swf = '../dist/swf/video-js.swf';
-        videojs('player', {}, function() {
+        videojs('player', {width: 640, height: 400, techOrder: ['hls', 'flash', 'html5']}, function() {
             player = this;
+            // exposing sendbeacon() function
+            sendBeacon = player.ga({debug: true}).sendbeacon;
+            // initilizing volume persistance
+            player.persistvolume({namespace: 'videojs-volume'});
+            // initializing Google IMA SDK
             player.ima({
                 id: 'player',
-                adTagUrl: 'https://pubads.g.doubleclick.net/gampad/ads?' +
-                    'sz=640x360&iu=/6062/iab_vast_samples/skippable&' +
-                    'ciu_szs=300x250,728x90&impl=s&gdfp_req=1&env=vp&' +
-                    'output=xml_vast2&unviewed_position_start=1&' +
-                    'url=[referrer_url]&correlator=[timestamp]'
+                debug: true,
+                adTagUrl: 'http://pubads.g.doubleclick.net/gampad/ads?sz=640x480&' +
+                'iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&' +
+                'impl=s&gdfp_req=1&env=vp&output=xml_vmap1&unviewed_position_start=1&' +
+                'cust_params=sample_ar%3Dpremidpostpod%26deployment%3Dgmf-js&' +
+                'cmsid=496&vid=short_onecue&correlator='
             });
             player.controls(true);
             player.src({
                 type: 'application/x-mpegURL',
-                src: 'http://solutions.brightcove.com/jwhisenant/hls/apple/bipbop/bipbopall.m3u8'
+                src: 'http://playertest.longtailvideo.com/adaptive/bbbfull/bbbfull.m3u8'
             });
             player.on('loadedmetadata', function() {
-                player.ima.requestAds();
+                player.ima.requestAds(); // Play ads when loaded
                 player.play();
             })
         });

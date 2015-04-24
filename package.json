@@ -15,7 +15,9 @@
     "videojs-contrib-hls": "^0.13.0",
     "videojs-contrib-media-sources": "^0.3.1",
     "videojs-ima": "^0.1.0",
-    "videojs-swf": "^4.6.0"
+    "videojs-persistvolume": "git://github.com/alexbakum/videojs-persistvolume#0796fe517c83ae384b2711f90cf416c6aa5e2f7d",
+    "videojs-swf": "^4.6.0",
+    "vtt.js": "^0.12.1"
   },
   "devDependencies": {
     "browser-sync": "^2.6.4",
@@ -33,6 +35,7 @@
   "browser": {
     "contrib/ads/videojs-ads": "./node_modules/videojs-contrib-ads/src/videojs.ads.js",
     "videojs-ima": "./node_modules/videojs-ima/src/videojs.ima.js",
+    "videojs-ga": "./node_modules/videojs-ga/dist/videojs.ga.js",
     "contrib/hls/videojs-hls": "./node_modules/videojs-contrib-hls/src/videojs-hls.js",
     "contrib/hls/stream": "./node_modules/videojs-contrib-hls/src/stream.js",
     "contrib/hls/flv-tag": "./node_modules/videojs-contrib-hls/src/flv-tag.js",
@@ -48,8 +51,12 @@
     "contrib/media-sources": "./node_modules/videojs-contrib-media-sources/src/videojs-media-sources.js"
   },
   "browserify-shim": {
-    "video.js": "videojs",
     "contrib/ads/videojs-ads": {
+      "depends": [
+        "video.js:videojs"
+      ]
+    },
+    "videojs-ga": {
       "depends": [
         "video.js:videojs"
       ]

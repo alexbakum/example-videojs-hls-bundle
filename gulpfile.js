@@ -5,9 +5,11 @@ var gutil = require('gulp-util');
 var browserSync = require('browser-sync').create();
 var path = require('path');
 
+//process.env.BROWSERIFYSHIM_DIAGNOSTICS=1;
+
 gulp.task('js:videojs', function () {
     return browserify()
-        .require(path.dirname(require.resolve('video.js')) + "/video.dev.js", {expose: 'video.js'})
+        .require(path.dirname(require.resolve('video.js')) + "/video.novtt.dev.js", {expose: 'video.js'})
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.js'))
@@ -29,11 +31,19 @@ gulp.task('js:videojs-hls-standalone', function () {
         .pipe(source('videojs.hls.js'))
         .pipe(gulp.dest('./dist/js'));
 });
-gulp.task('js:videojs-bundle', function () {
-    return browserify('./src/videojs.hls.bundle/index.js')
+gulp.task('js:videojs-ga-standalone', function() {
+    return browserify('./src/videojs.ga/index.js')
+        .exclude('video.js')
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-        .pipe(source('videojs.hls.bundle.js'))
+        .pipe(source('videojs.ga.js'))
+        .pipe(gulp.dest('./dist/js'));
+});
+gulp.task('js:videojs-bundle', function () {
+    return browserify('./src/videojs.bundle/index.js')
+        .bundle()
+        .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(source('videojs.bundle.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:copy-videojs-vtt.js', function () {
@@ -44,6 +54,7 @@ gulp.task('js', [
     'js:videojs',
     'js:videojs-ads-ima-standalone',
     'js:videojs-hls-standalone',
+    'js:videojs-ga-standalone',
     'js:videojs-bundle',
     'js:copy-videojs-vtt.js'
 ]);
@@ -80,10 +91,11 @@ gulp.task('swf', ['swf:copy-videojs-swf']);
 
 gulp.task('dev:bs', ['default'], function() {
     browserSync.init({
-        server: {baseDir: './'}
+        server: {baseDir: './'},
+        directory: true
     });
 
-    gulp.watch(['src/**/*.js'], ['dev:watch']);
+    gulp.watch(['src/**/*.js', 'examples/*.html'], ['dev:watch']);
 });
 gulp.task('dev:watch', ['default'], browserSync.reload);
 gulp.task('dev', ['dev:bs']);

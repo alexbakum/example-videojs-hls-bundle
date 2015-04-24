@@ -1,5 +1,15 @@
-global.pkcs7 = require('pkcs7');
+var vtt = require('vtt.js');
+global.WebVTT = vtt.WebVTT;
+global.VTTCue = vtt.VTTCue;
+global.VTTRegion = vtt.VTTRegion;
+global.pkcs7 = require('pkcs7'); // required for hls plugin
+global.videojs = require('video.js');
 
+// persistent volume
+require('videojs-persistvolume');
+// Google Analytics
+require('videojs-ga');
+// hls playback
 require('contrib/media-sources');
 require('contrib/hls/videojs-hls');
 require('contrib/hls/stream');
@@ -13,3 +23,7 @@ require('contrib/hls/m3u8/m3u8-parser');
 require('contrib/hls/xhr');
 require('contrib/hls/playlist-loader');
 require('contrib/hls/decrypter');
+
+// Google IMA
+require('videojs-ima');
+
