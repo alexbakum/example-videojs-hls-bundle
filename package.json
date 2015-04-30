@@ -10,10 +10,11 @@
   "license": "WTFPL",
   "dependencies": {
     "pkcs7": "^0.2.3",
-    "video.js": "^4.12.5",
+    "video.js": "git://github.com/alexbakum/video.js#feature/v4.12.5-subscribe",
     "videojs-contrib-ads": "^2.1.0",
     "videojs-contrib-hls": "^0.13.0",
     "videojs-contrib-media-sources": "^0.3.1",
+    "videojs-ga": "git://github.com/mickey/videojs-ga",
     "videojs-ima": "^0.1.0",
     "videojs-persistvolume": "git://github.com/alexbakum/videojs-persistvolume#0796fe517c83ae384b2711f90cf416c6aa5e2f7d",
     "videojs-swf": "^4.6.0",

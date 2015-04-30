@@ -156,7 +156,7 @@ module.exports = function unpad(padded) {
 /*! Video.js v4.12.5 Copyright 2014 Brightcove, Inc. https://github.com/videojs/video.js/blob/master/LICENSE */ 
 (function() {var b=void 0,f=!0,j=null,l=!1;function m(){return function(){}}function n(a){return function(){return this[a]}}function q(a){return function(){return a}}var s;document.createElement("video");document.createElement("audio");document.createElement("track");
 function t(a,c,d){if("string"===typeof a){0===a.indexOf("#")&&(a=a.slice(1));if(t.Aa[a])return c&&t.log.warn('Player "'+a+'" is already initialised. Options will not be applied.'),d&&t.Aa[a].I(d),t.Aa[a];a=t.m(a)}if(!a||!a.nodeName)throw new TypeError("The element or ID supplied is not valid. (videojs)");return a.player||new t.Player(a,c,d)}var videojs=window.videojs=t;t.ic="4.12";t.vd="https:"==document.location.protocol?"https://":"http://";t.VERSION="4.12.5";
-t.options={techOrder:["html5","flash"],html5:{},flash:{},width:300,height:150,defaultVolume:0,playbackRates:[],inactivityTimeout:2E3,children:{mediaLoader:{},posterImage:{},loadingSpinner:{},textTrackDisplay:{},bigPlayButton:{},controlBar:{},errorDisplay:{},textTrackSettings:{}},language:document.getElementsByTagName("html")[0].getAttribute("lang")||navigator.languages&&navigator.languages[0]||navigator.If||navigator.language||"en",languages:{},notSupportedMessage:"No compatible source was found for this video."};
+t.options={techOrder:["html5","flash"],html5:{},flash:{},width:300,height:150,defaultVolume:0,playbackRates:[],inactivityTimeout:2E3,children:{mediaLoader:{},posterImage:{},loadingSpinner:{},textTrackDisplay:{},bigPlayButton:{},controlBar:{},errorDisplay:{},textTrackSettings:{}},language:document.getElementsByTagName("html")[0].getAttribute("lang")||navigator.languages&&navigator.languages[0]||navigator.Jf||navigator.language||"en",languages:{},notSupportedMessage:"No compatible source was found for this video."};
 "GENERATED_CDN_VSN"!==t.ic&&(videojs.options.flash.swf=t.vd+"vjs.zencdn.net/"+t.ic+"/video-js.swf");t.Jd=function(a,c){t.options.languages[a]=t.options.languages[a]!==b?t.$.ya(t.options.languages[a],c):c;return t.options.languages};t.Aa={};"function"===typeof define&&define.amd?define("videojs",[],function(){return videojs}):"object"===typeof exports&&"object"===typeof module&&(module.exports=videojs);t.Ea=t.CoreObject=m();
 t.Ea.extend=function(a){var c,d;a=a||{};c=a.init||a.l||this.prototype.init||this.prototype.l||m();d=function(){c.apply(this,arguments)};d.prototype=t.i.create(this.prototype);d.prototype.constructor=d;d.extend=t.Ea.extend;d.create=t.Ea.create;for(var e in a)a.hasOwnProperty(e)&&(d.prototype[e]=a[e]);return d};t.Ea.create=function(){var a=t.i.create(this.prototype);this.apply(a,arguments);return a};
 t.b=function(a,c,d){if(t.i.isArray(c))return v(t.b,a,c,d);var e=t.getData(a);e.G||(e.G={});e.G[c]||(e.G[c]=[]);d.s||(d.s=t.s++);e.G[c].push(d);e.ca||(e.disabled=l,e.ca=function(c){if(!e.disabled){c=t.Pb(c);var d=e.G[c.type];if(d)for(var d=d.slice(0),k=0,p=d.length;k<p&&!c.Rc();k++)d[k].call(a,c)}});1==e.G[c].length&&(a.addEventListener?a.addEventListener(c,e.ca,l):a.attachEvent&&a.attachEvent("on"+c,e.ca))};
@@ -287,7 +287,7 @@ t.f.S.eb=function(a){function c(a){try{return t.A.canPlayType(a)}catch(c){return
 t.f.Ve=function(){var a;(a=!!t.A.textTracks)&&0<t.A.textTracks.length&&(a="number"!==typeof t.A.textTracks[0].mode);a&&t.jc&&(a=l);return a};t.f.prototype.featuresVolumeControl=t.f.Od();t.f.prototype.featuresPlaybackRate=t.f.Nd();t.f.prototype.movingMediaElementInDOM=!t.Ad;t.f.prototype.featuresFullscreenResize=f;t.f.prototype.featuresProgressEvents=f;t.f.prototype.featuresNativeTextTracks=t.f.Ve();var S,oa=/^application\/(?:x-|vnd\.apple\.)mpegurl/i,pa=/^video\/mp4/i;
 t.f.Xc=function(){4<=t.hc&&(S||(S=t.A.constructor.prototype.canPlayType),t.A.constructor.prototype.canPlayType=function(a){return a&&oa.test(a)?"maybe":S.call(this,a)});t.Ed&&(S||(S=t.A.constructor.prototype.canPlayType),t.A.constructor.prototype.canPlayType=function(a){return a&&pa.test(a)?"maybe":S.call(this,a)})};t.f.bf=function(){var a=t.A.constructor.prototype.canPlayType;t.A.constructor.prototype.canPlayType=S;S=j;return a};t.f.Xc();t.f.yb="loadstart suspend abort error emptied stalled loadedmetadata loadeddata canplay canplaythrough playing waiting seeking seeked ended durationchange timeupdate progress play pause ratechange volumechange".split(" ");
 t.f.Mb=function(a){if(a){a.player=j;for(a.parentNode&&a.parentNode.removeChild(a);a.hasChildNodes();)a.removeChild(a.firstChild);a.removeAttribute("src");if("function"===typeof a.load)try{a.load()}catch(c){}}};
-t.g=t.j.extend({l:function(a,c,d){t.j.call(this,a,c,d);var e=c.source;d=c.parentEl;var g=this.c=t.e("div",{id:a.id()+"_temp_flash"}),h=a.id()+"_flash_api",k=a.q,k=t.i.D({readyFunction:"videojs.Flash.onReady",eventProxyFunction:"videojs.Flash.onEvent",errorEventProxyFunction:"videojs.Flash.onError",autoplay:k.autoplay,preload:k.Qa,loop:k.loop,muted:k.muted},c.flashVars),p=t.i.D({wmode:"opaque",bgcolor:"#000000"},c.params),h=t.i.D({id:h,name:h,"class":"vjs-tech"},c.attributes);e&&this.I(function(){this.Sa(e)});
+t.g=t.j.extend({l:function(a,c,d){t.j.call(this,a,c,d);var e=c.source;d=c.parentEl;var g=this.c=t.e("div",{id:a.id()+"_temp_flash"}),h=a.id()+"_flash_api",k=a.q,k=t.i.D({readyFunction:"videojs.Flash.onReady",eventProxyFunction:"videojs.Flash.onEvent",errorEventProxyFunction:"videojs.Flash.onError",autoplay:k.autoplay,subscribe:k.If,preload:k.Qa,loop:k.loop,muted:k.muted},c.flashVars),p=t.i.D({wmode:"opaque",bgcolor:"#000000"},c.params),h=t.i.D({id:h,name:h,"class":"vjs-tech"},c.attributes);e&&this.I(function(){this.Sa(e)});
 t.Ub(g,d);c.startTime&&this.I(function(){this.load();this.play();this.currentTime(c.startTime)});t.jc&&this.I(function(){this.b("mousemove",function(){this.k().o({type:"mousemove",bubbles:l})})});a.b("stageclick",a.reportUserActivity);this.c=t.g.Hc(c.swf,g,k,p,h)}});s=t.g.prototype;s.dispose=function(){t.j.prototype.dispose.call(this)};s.play=function(){this.c.vjs_play()};s.pause=function(){this.c.vjs_pause()};s.src=function(a){return a===b?this.currentSrc():this.la(a)};
 s.la=function(a){a=t.$d(a);this.c.vjs_src(a);if(this.d.autoplay()){var c=this;this.setTimeout(function(){c.play()},0)}};t.g.prototype.setCurrentTime=function(a){this.oe=a;this.c.vjs_setProperty("currentTime",a);t.j.prototype.bc.call(this)};t.g.prototype.currentTime=function(){return this.seeking()?this.oe||0:this.c.vjs_getProperty("currentTime")};t.g.prototype.currentSrc=function(){return this.Ec?this.Ec.src:this.c.vjs_getProperty("currentSrc")};t.g.prototype.load=function(){this.c.vjs_load()};
 t.g.prototype.poster=function(){this.c.vjs_getProperty("poster")};t.g.prototype.setPoster=m();t.g.prototype.buffered=function(){return t.Lb(0,this.c.vjs_getProperty("buffered"))};t.g.prototype.Ta=q(l);t.g.prototype.Ic=q(l);function qa(){var a=T[U],c=a.charAt(0).toUpperCase()+a.slice(1);ra["set"+c]=function(c){return this.c.vjs_setProperty(a,c)}}function sa(a){ra[a]=function(){return this.c.vjs_getProperty(a)}}
@@ -4710,6 +4710,10 @@ videojs.Hls.prototype.selectPlaylist = function () {
   // sort variants by resolution
   bandwidthPlaylists.sort(videojs.Hls.comparePlaylistResolution);
 
+  // forget our old variant from above, or we might choose that in high-bandwidth scenarios
+  // (this could be the lowest bitrate rendition as  we go through all of them above)
+  variant = null;
+
   // iterate through the bandwidth-filtered playlists and find
   // best rendition by player dimension
   while (i--) {
@@ -4736,7 +4740,7 @@ videojs.Hls.prototype.selectPlaylist = function () {
     } else if (variant.attributes.RESOLUTION.width < player.width() &&
         variant.attributes.RESOLUTION.height < player.height()) {
       // if we don't have an exact match, see if we have a good higher quality variant to use
-      if (oldvariant.attributes && oldvariant.attributes.RESOLUTION &&
+      if (oldvariant && oldvariant.attributes && oldvariant.attributes.RESOLUTION &&
           oldvariant.attributes.RESOLUTION.width && oldvariant.attributes.RESOLUTION.height) {
         resolutionPlusOne = oldvariant;
       }
@@ -5583,7 +5587,6 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
     return sourceBuffer;
   };
   videojs.MediaSource.prototype.endOfStream = function(){
-    this.swfObj.vjs_endOfStream();
     this.readyState = 'ended';
   };
 
@@ -5658,13 +5661,6 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
           }
           bufferSize -= payload.byteLength;
 
-          // schedule another append if necessary
-          if (bufferSize !== 0) {
-            scheduleTick(append);
-          } else {
-            self.trigger({ type: 'updateend' });
-          }
-
           // base64 encode the bytes
           for (i = 0, length = payload.byteLength; i < length; i++) {
             binary += String.fromCharCode(payload[i]);
@@ -5672,12 +5668,19 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
           b64str = window.btoa(binary);
 
           // bypass normal ExternalInterface calls and pass xml directly
-          // EI can be slow by default
+          // IE can be slow by default
           self.source.swfObj.CallFunction('<invoke name="vjs_appendBuffer"' +
                                           'returntype="javascript"><arguments><string>' +
                                           b64str +
                                           '</string></arguments></invoke>');
-          };
+
+          // schedule another append if necessary
+          if (bufferSize !== 0) {
+            scheduleTick(append);
+          } else if (self.source.readyState === 'ended') {
+            self.source.swfObj.vjs_endOfStream();
+          }
+        };
 
     videojs.SourceBuffer.prototype.init.call(this);
     this.source = source;
@@ -5688,6 +5691,7 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
         scheduleTick(append);
       }
 
+      this.source.readyState = 'open';
       this.trigger({ type: 'update' });
 
       buffer.push(uint8Array);

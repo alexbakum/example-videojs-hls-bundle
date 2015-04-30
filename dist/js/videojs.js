@@ -7799,6 +7799,7 @@ vjs.Flash = vjs.MediaTechController.extend({
 
           // Player Settings
           'autoplay': playerOptions.autoplay,
+          'subscribe': playerOptions.subscribe,
           'preload': playerOptions.preload,
           'loop': playerOptions.loop,
           'muted': playerOptions.muted
