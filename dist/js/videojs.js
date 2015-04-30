@@ -4962,6 +4962,20 @@ vjs.Player.prototype.autoplay = function(value){
 };
 
 /**
+ * Get or set the subscribe attribute.
+ * @return {String} The subscribe attribute value when getting
+ * @return {vjs.Player} Returns the player when setting
+ */
+vjs.Player.prototype.subscribe = function(value){
+  if (value !== undefined) {
+    this.techCall('setSubscribe', value);
+    this.options_['subscribe'] = value;
+    return this;
+  }
+  return this.techGet('subscribe', value);
+};
+
+/**
  * Get or set the loop attribute on the video element.
  * @return {String} The loop attribute value when getting
  * @return {vjs.Player} Returns the player when setting
