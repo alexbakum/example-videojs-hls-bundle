@@ -3705,6 +3705,10 @@ videojs.Hls.prototype.selectPlaylist = function () {
   // sort variants by resolution
   bandwidthPlaylists.sort(videojs.Hls.comparePlaylistResolution);
 
+  // forget our old variant from above, or we might choose that in high-bandwidth scenarios
+  // (this could be the lowest bitrate rendition as  we go through all of them above)
+  variant = null;
+
   // iterate through the bandwidth-filtered playlists and find
   // best rendition by player dimension
   while (i--) {
@@ -3731,7 +3735,7 @@ videojs.Hls.prototype.selectPlaylist = function () {
     } else if (variant.attributes.RESOLUTION.width < player.width() &&
         variant.attributes.RESOLUTION.height < player.height()) {
       // if we don't have an exact match, see if we have a good higher quality variant to use
-      if (oldvariant.attributes && oldvariant.attributes.RESOLUTION &&
+      if (oldvariant && oldvariant.attributes && oldvariant.attributes.RESOLUTION &&
           oldvariant.attributes.RESOLUTION.width && oldvariant.attributes.RESOLUTION.height) {
         resolutionPlusOne = oldvariant;
       }
@@ -4578,7 +4582,6 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
     return sourceBuffer;
   };
   videojs.MediaSource.prototype.endOfStream = function(){
-    this.swfObj.vjs_endOfStream();
     this.readyState = 'ended';
   };
 
@@ -4653,13 +4656,6 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
           }
           bufferSize -= payload.byteLength;
 
-          // schedule another append if necessary
-          if (bufferSize !== 0) {
-            scheduleTick(append);
-          } else {
-            self.trigger({ type: 'updateend' });
-          }
-
           // base64 encode the bytes
           for (i = 0, length = payload.byteLength; i < length; i++) {
             binary += String.fromCharCode(payload[i]);
@@ -4667,12 +4663,19 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
           b64str = window.btoa(binary);
 
           // bypass normal ExternalInterface calls and pass xml directly
-          // EI can be slow by default
+          // IE can be slow by default
           self.source.swfObj.CallFunction('<invoke name="vjs_appendBuffer"' +
                                           'returntype="javascript"><arguments><string>' +
                                           b64str +
                                           '</string></arguments></invoke>');
-          };
+
+          // schedule another append if necessary
+          if (bufferSize !== 0) {
+            scheduleTick(append);
+          } else if (self.source.readyState === 'ended') {
+            self.source.swfObj.vjs_endOfStream();
+          }
+        };
 
     videojs.SourceBuffer.prototype.init.call(this);
     this.source = source;
@@ -4683,6 +4686,7 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
         scheduleTick(append);
       }
 
+      this.source.readyState = 'open';
       this.trigger({ type: 'update' });
 
       buffer.push(uint8Array);

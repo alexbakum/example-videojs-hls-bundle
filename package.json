@@ -1,6 +1,6 @@
 {
   "name": "videojs-hls-bundle",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Just a todo demo for gulp+browserify videojs and videojs-contrib-hls bundling",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,8 @@
     "videojs-contrib-ads": "^2.1.0",
     "videojs-contrib-hls": "^0.13.0",
     "videojs-contrib-media-sources": "^0.3.1",
-    "videojs-ima": "^0.1.0",
+    "videojs-ga": "mickey/videojs-ga",
+    "videojs-ima": "googleads/videojs-ima",
     "videojs-persistvolume": "git://github.com/alexbakum/videojs-persistvolume#0796fe517c83ae384b2711f90cf416c6aa5e2f7d",
     "videojs-swf": "^4.6.0",
     "vtt.js": "^0.12.1"

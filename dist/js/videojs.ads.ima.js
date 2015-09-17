@@ -328,7 +328,6 @@ var
     } else if (!player.ended() || !snapshot.ended) {
       // if we didn't change the src, just restore the tracks
       restoreTracks();
-
       // the src didn't change and this wasn't a postroll
       // just resume playback at the current time.
       player.play();
@@ -393,7 +392,7 @@ var
     (function() {
       var
         videoEvents = videojs.Html5.Events,
-        i = videoEvents.length,
+        i,
         returnTrue = function() { return true; },
         triggerEvent = function(type, event) {
           // pretend we called stopImmediatePropagation because we want the native
@@ -410,10 +409,8 @@ var
         redispatch = function(event) {
           if (player.ads.state === 'ad-playback') {
             triggerEvent('ad', event);
-
           } else if (player.ads.state === 'content-playback' && event.type === 'ended') {
             triggerEvent('content', event);
-
           } else if (player.ads.state === 'content-resuming') {
             if (player.ads.snapshot) {
               // the video element was recycled for ad playback
@@ -444,6 +441,11 @@ var
           }
         };
 
+      //Add video.js specific events
+      videoEvents.push('firstplay');
+      videoEvents.push('loadedalldata');
+
+      i = videoEvents.length;
       while (i--) {
         player.on(videoEvents[i], redispatch);
       }
@@ -466,12 +468,29 @@ var
     player.ads = {
       state: 'content-set',
 
+      // Call this when an ad response has been recieved and there are
+      // linear ads ready to be played.
       startLinearAdMode: function() {
-        player.trigger('adstart');
+        if (player.ads.state !== 'ad-playback') {
+          player.trigger('adstart');
+        }
       },
 
+      // Call this when a linear ad pod has finished playing.
       endLinearAdMode: function() {
-        player.trigger('adend');
+        if (player.ads.state === 'ad-playback') {
+          player.trigger('adend');
+        }
+      },
+
+      // Call this when an ad response has been recieved but there are no
+      // linear ads to be played (i.e. no ads available, or overlays).
+      // This has no effect if we are already in a linear ad mode.  Always
+      // use endLinearAdMode() to exit from linear ad-playback state.
+      skipLinearAdMode: function() {
+        if (player.ads.state !== 'ad-playback') {
+          player.trigger('adskip');
+        }
       }
     };
 
@@ -495,6 +514,9 @@ var
               },
               'adserror': function() {
                 this.state = 'content-playback';
+              },
+              'adskip': function() {
+                this.state = 'content-playback';
               }
             }
           },
@@ -503,6 +525,9 @@ var
               'play': function() {
                 this.state = 'preroll?';
                 cancelContentPlay(player);
+              },
+              'adskip': function() {
+                this.state = 'content-playback';
               },
               'adserror': function() {
                 this.state = 'content-playback';
@@ -530,7 +555,9 @@ var
               },
               'adstart': function() {
                 this.state = 'ad-playback';
-                player.el().className += ' vjs-ad-playing';
+              },
+              'adskip': function() {
+                this.state = 'content-playback';
               },
               'adtimeout': function() {
                 this.state = 'content-playback';
@@ -561,6 +588,9 @@ var
               'adsready': function() {
                 this.state = 'preroll?';
               },
+              'adskip': function() {
+                this.state = 'content-playback';
+              },
               'adtimeout': function() {
                 this.state = 'content-playback';
               },
@@ -574,8 +604,12 @@ var
               // capture current player state snapshot (playing, currentTime, src)
               this.snapshot = getPlayerSnapshot(player);
 
-              // remove the poster so it doesn't flash between videos
+              // add css to the element to indicate and ad is playing.
+              player.el().className += ' vjs-ad-playing';
+
+              // remove the poster so it doesn't flash between ads
               removeNativePoster(player);
+
               // We no longer need to supress play events once an ad is playing.
               // Clear it if we were.
               if (player.ads.cancelPlayTimeout) {
@@ -585,11 +619,10 @@ var
             },
             leave: function() {
               removeClass(player.el(), 'vjs-ad-playing');
-
               restorePlayerSnapshot(player, this.snapshot);
+              // trigger 'adend' as a consistent notification
+              // event that we're exiting ad-playback.
               if (player.ads.triggerevent !== 'adend') {
-                // trigger 'adend' as a consistent notification
-                // event that we're exiting ad-playback.
                 player.trigger('adend');
               }
             },
@@ -647,7 +680,12 @@ var
             events: {
               'adstart': function() {
                 this.state = 'ad-playback';
-                player.el().className += ' vjs-ad-playing';
+              },
+              'adskip': function() {
+                this.state = 'content-resuming';
+                setImmediate(function() {
+                  player.trigger('ended');
+                });
               },
               'adtimeout': function() {
                 this.state = 'content-resuming';
@@ -684,9 +722,6 @@ var
               },
               'adstart': function() {
                 this.state = 'ad-playback';
-                player.el().className += ' vjs-ad-playing';
-                // remove the poster so it doesn't flash between videos
-                removeNativePoster(player);
               },
               'contentupdate': function() {
                 if (player.paused()) {
@@ -741,7 +776,8 @@ var
       'adserror',
       'adscanceled',
       'adstart',  // startLinearAdMode()
-      'adend'     // endLinearAdMode()
+      'adend',    // endLinearAdMode()
+      'adskip'    // skipLinearAdMode()
     ]), fsmHandler);
 
     // keep track of the current content source
@@ -786,7 +822,6 @@ var
   vjs.plugin('ads', adFramework);
 
 })(window, document, videojs);
-
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -794,7 +829,7 @@ var
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
-require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js");
+require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Copyright 2014 Google Inc.
@@ -832,7 +867,10 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     return obj;
   },
 
-  defaults = {
+  ima_defaults = {
+    debug: false,
+    timeout: 5000,
+    prerollTimeout: 100
   },
 
   imaPlugin = function(options, readyCallback) {
@@ -849,8 +887,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       adContainerDiv =
           vjsControls.el().parentNode.insertBefore(
               document.createElement('div'),
-              vjsControls.el().parentNode.childNodes[
-                  vjsControls.el().parentNode.childNodes.length-1]);
+              vjsControls.el());
       adContainerDiv.id = 'ima-ad-container';
       adContainerDiv.style.width = player.width() + 'px';
       adContainerDiv.style.height = player.height() + 'px';
@@ -864,7 +901,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
           false);
       player.ima.createControls_();
       adDisplayContainer =
-          new google.ima.AdDisplayContainer(adContainerDiv);
+          new google.ima.AdDisplayContainer(adContainerDiv, contentPlayer);
     };
 
     /**
@@ -878,6 +915,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       countdownDiv = document.createElement('div');
       countdownDiv.id = 'ima-countdown-div';
       countdownDiv.innerHTML = 'Advertisement';
+      countdownDiv.style.display = showCountdown ? 'block' : 'none';
       seekBarDiv = document.createElement('div');
       seekBarDiv.id = 'ima-seek-bar-div';
       seekBarDiv.style.width = player.width() + 'px';
@@ -897,6 +935,14 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
           'click',
           player.ima.onAdMuteClick_,
           false);
+      sliderDiv = document.createElement('div');
+      sliderDiv.id = 'ima-slider-div';
+      sliderDiv.addEventListener(
+          'mousedown',
+          player.ima.onAdVolumeSliderMouseDown_,
+          false);
+      sliderLevelDiv = document.createElement('div');
+      sliderLevelDiv.id = 'ima-slider-level-div';
       fullscreenDiv = document.createElement('div');
       fullscreenDiv.id = 'ima-fullscreen-div';
       fullscreenDiv.className = 'ima-non-fullscreen';
@@ -916,9 +962,13 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       controlsDiv.insertBefore(
           muteDiv, controlsDiv.childNodes[controlsDiv.childNodes.length]);
       controlsDiv.insertBefore(
+          sliderDiv, controlsDiv.childNodes[controlsDiv.childNodes.length]);
+      controlsDiv.insertBefore(
           fullscreenDiv, controlsDiv.childNodes[controlsDiv.childNodes.length]);
       seekBarDiv.insertBefore(
           progressDiv, seekBarDiv.childNodes[controlsDiv.childNodes.length]);
+      sliderDiv.insertBefore(
+          sliderLevelDiv, sliderDiv.childNodes[sliderDiv.childNodes.length]);
     };
 
     /**
@@ -969,6 +1019,9 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       adsManager.addEventListener(
           google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED,
           player.ima.onContentResumeRequested_);
+      adsManager.addEventListener(
+          google.ima.AdEvent.Type.ALL_ADS_COMPLETED,
+          player.ima.onAllAdsCompleted_);
 
       adsManager.addEventListener(
           google.ima.AdEvent.Type.LOADED,
@@ -981,6 +1034,9 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
           player.ima.onAdPlayPauseClick_);
       adsManager.addEventListener(
           google.ima.AdEvent.Type.COMPLETE,
+          player.ima.onAdComplete_);
+      adsManager.addEventListener(
+          google.ima.AdEvent.Type.SKIPPED,
           player.ima.onAdComplete_);
 
       player.trigger('adsready');
@@ -996,6 +1052,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
             player.width(),
             player.height(),
             google.ima.ViewMode.NORMAL);
+        adsManager.setVolume(player.muted() ? 0 : player.volume());
         adsManager.start();
       } catch (adError) {
          player.ima.onAdError_(adError);
@@ -1014,7 +1071,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       if (adsManager) {
         adsManager.destroy();
       }
-      player.play();
+      player.trigger('adserror');
     };
 
     /**
@@ -1024,9 +1081,10 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
      * @ignore
      */
     player.ima.onAdError_ = function(adErrorEvent) {
-      window.console.log('Ad error: ' + adErrorEvent.getAdError());
+      window.console.log('Ad error: ' + adErrorEvent.getError());
       adsManager.destroy();
-      player.play();
+      adContainerDiv.style.display = 'none';
+      player.trigger('adserror');
     };
 
     /**
@@ -1037,6 +1095,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     player.ima.onContentPauseRequested_ = function(adEvent) {
       adsActive = true;
       adPlaying = true;
+      player.off('ended', localContentEndedListener);
       if (adEvent.getAd().getAdPodInfo().getPodIndex() != -1) {
         // Skip this call for post-roll ads
         player.ads.startLinearAdMode();
@@ -1055,8 +1114,10 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     player.ima.onContentResumeRequested_ = function(adEvent) {
       adsActive = false;
       adPlaying = false;
-      adContainerDiv.style.display = 'none';
-      controlsDiv.style.display = 'none';
+      player.on('ended', localContentEndedListener);
+      if (currentAd && currentAd.isLinear()) {
+        adContainerDiv.style.display = 'none';
+      }
       vjsControls.show();
       if (!currentAd) {
         // Something went wrong playing the ad
@@ -1068,6 +1129,21 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       }
       countdownDiv.innerHTML = '';
     };
+
+    /**
+     * Records that ads have completed and calls contentAndAdsEndedListeners
+     * if content is also complete.
+     * @param {google.ima.AdEvent} adEvent The AdEvent thrown by the AdsManager.
+     * @ignore
+     */
+    player.ima.onAllAdsCompleted_ = function(adEvent) {
+      allAdsCompleted = true;
+      if (contentComplete == true) {
+        for (var index in contentAndAdsEndedListeners) {
+          contentAndAdsEndedListeners[index]();
+        }
+      }
+    }
 
     /**
      * Starts the content video when a non-linear ad is loaded.
@@ -1091,6 +1167,11 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       if (currentAd.isLinear()) {
         adTrackingTimer = setInterval(
             player.ima.onAdPlayheadTrackerInterval_, 250);
+        // Don't bump container when controls are shown
+        adContainerDiv.className = '';
+      } else {
+        // Bump container when controls are shown
+        adContainerDiv.className = 'bumpable-ima-ad-container';
       }
     };
 
@@ -1162,6 +1243,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       controlsDiv.style.height = '37px';
       playPauseDiv.style.display = 'block';
       muteDiv.style.display = 'block';
+      sliderDiv.style.display = 'block';
       fullscreenDiv.style.display = 'block';
     };
 
@@ -1192,24 +1274,76 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
         // Bubble down to content player
         player.muted(false);
         adMuted = false;
+        sliderLevelDiv.style.width = player.volume() * 100 + "%";
       } else {
         muteDiv.className = 'ima-muted';
         adsManager.setVolume(0);
         // Bubble down to content player
         player.muted(true);
         adMuted = true;
+        sliderLevelDiv.style.width = "0%";
       }
     };
 
+    /* Listener for mouse down events during ad playback. Used for volume.
+     * @ignore
+     */
+    player.ima.onAdVolumeSliderMouseDown_ = function() {
+       document.addEventListener('mouseup', player.ima.onMouseUp_, false);
+       document.addEventListener('mousemove', player.ima.onMouseMove_, false);
+    }
+
+    /* Mouse movement listener used for volume slider.
+     * @ignore
+     */
+    player.ima.onMouseMove_ = function(event) {
+      player.ima.setVolumeSlider_(event);
+    }
+
+    /* Mouse release listener used for volume slider.
+     * @ignore
+     */
+    player.ima.onMouseUp_ = function(event) {
+      player.ima.setVolumeSlider_(event);
+      document.removeEventListener('mousemove', player.ima.onMouseMove_);
+      document.removeEventListener('mouseup', player.ima.onMouseUp_);
+    }
+
+    /* Utility function so set vvolume and associated UI
+     * @ignore
+     */
+    player.ima.setVolumeSlider_ = function(event) {
+      var percent =
+          (event.clientX - sliderDiv.getBoundingClientRect().left) /
+              sliderDiv.offsetWidth;
+      percent *= 100;
+      //Bounds value 0-100 if mouse is outside slider region.
+      percent = Math.min(Math.max(percent, 0), 100);
+      sliderLevelDiv.style.width = percent + "%";
+      player.volume(percent / 100); //0-1
+      adsManager.setVolume(percent / 100);
+      if (player.volume() == 0) {
+        muteDiv.className = 'ima-muted';
+        player.muted(true);
+        adMuted = true;
+      }
+      else
+      {
+        muteDiv.className = 'ima-non-muted';
+        player.muted(false);
+        adMuted = false;
+      }
+    }
+
     /**
-     * Listener for clicks on the fullscreen button durin ad playback.
+     * Listener for clicks on the fullscreen button during ad playback.
      * @ignore
      */
     player.ima.onAdFullscreenClick_ = function() {
-      if (player.isFullScreen()) {
-        player.cancelFullScreen();
+      if (player.isFullscreen()) {
+        player.exitFullscreen();
       } else {
-        player.requestFullScreen();
+        player.requestFullscreen();
       }
     };
 
@@ -1219,7 +1353,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
      * @ignore
      */
     player.ima.onFullscreenChange_ = function() {
-      if (player.isFullScreen()) {
+      if (player.isFullscreen()) {
         fullscreenDiv.className = 'ima-fullscreen';
         adContainerDiv.style.width = window.screen.width + 'px';
         adContainerDiv.style.height = window.screen.height + 'px';
@@ -1289,6 +1423,7 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
         adsLoader.contentComplete();
       }
       contentComplete = false;
+      allAdsCompleted = false;
     };
 
     /**
@@ -1317,7 +1452,8 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
      * Sets the content of the video player. You should use this method instead
      * of setting the content src directly to ensure the proper ad tag is
      * requested when the video content is loaded.
-     * @param {string} contentSrc The URI for the content to be played.
+     * @param {?string} contentSrc The URI for the content to be played. Leave
+     *     blank to use the existing content.
      * @param {?string} adTag The ad tag to be requested when the content loads.
      *     Leave blank to use the existing ad tag.
      * @param {?boolean} playOnLoad True to play the content once it has loaded,
@@ -1327,16 +1463,17 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
         function( contentSrc, adTag, playOnLoad) {
       player.ima.resetIMA_();
       settings.adTagUrl = adTag ? adTag : settings.adTagUrl;
-      player.pause();
-      player.src(contentSrc);
+      //only try to pause the player when initialised with a source already
+      if (!!player.currentSrc()) {
+        player.pause();
+      }
+      if (contentSrc) {
+        player.src(contentSrc);
+      }
       if (playOnLoad) {
-        player.on('loadedmetadata', function() {
-          player.ima.playContentFromZero_();
-        });
+        player.on('loadedmetadata', player.ima.playContentFromZero_);
       } else {
-        player.on('loadedmetadata', function() {
-          player.ima.seekContentToZero_();
-        });
+        player.on('loadedmetadata', player.ima.seekContentToZero_);
       }
     };
 
@@ -1351,6 +1488,16 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     player.ima.addContentEndedListener = function(listener) {
       contentEndedListeners.push(listener);
     };
+
+    /**
+     * Adds a listener that will be called when content and all ads have
+     * finished playing.
+     * @param {function} listener The listener to be called when content and
+     *     ads complete.
+     */
+    player.ima.addContentAndAdsEndedListener = function(listener) {
+      contentAndAdsEndedListeners.push(listener);
+    }
 
     /**
      * Pauses the ad.
@@ -1375,13 +1522,23 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     };
 
     /**
+     * Set up intervals to check for seeking and update current video time.
+     */
+    player.ima.setUpPlayerIntervals_ = function() {
+      updateTimeIntervalHandle =
+          setInterval(player.ima.updateCurrentTime, seekCheckInterval);
+      seekCheckIntervalHandle =
+          setInterval(player.ima.checkForSeeking, seekCheckInterval);
+    };
+
+    /**
      * Updates the current time of the video
      */
     player.ima.updateCurrentTime = function() {
       if (!contentPlayheadTracker.seeking) {
         contentPlayheadTracker.currentTime = player.currentTime();
       }
-    }
+    };
 
     /**
      * Detects when the user is seeking through a video.
@@ -1400,12 +1557,37 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
         contentPlayheadTracker.seeking = false;
       }
       contentPlayheadTracker.previousTime = player.currentTime();
-    }
+    };
+
+    /**
+     * Changes the flag to show or hide the ad countdown timer.
+     *
+     * @param {boolean} showCountdownIn Show or hide the countdown timer.
+     */
+    player.ima.setShowCountdown = function(showCountdownIn) {
+      showCountdown = showCountdownIn;
+      countdownDiv.style.display = showCountdown ? 'block' : 'none';
+    };
+
+    /**
+     * Current plugin version.
+     */
+    var VERSION = '0.2.0';
 
     /**
      * Stores user-provided settings.
      */
     var settings;
+
+    /**
+     * Video element playing content.
+     */
+    var contentPlayer;
+
+    /**
+     * Boolean flag to show or hide the ad countdown timer.
+     */
+    var showCountdown;
 
     /**
      * Video.js control bar.
@@ -1446,6 +1628,16 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
      * Div used to display ad mute button.
      */
     var muteDiv;
+
+    /**
+     * Div used by the volume slider.
+     */
+    var sliderDiv;
+
+    /**
+     * Volume slider level visuals
+     */
+    var sliderLevelDiv;
 
     /**
      * Div used to display ad fullscreen button.
@@ -1520,6 +1712,21 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
     var contentComplete = false;
 
     /**
+     * True if ALL_ADS_COMPLETED has fired, false until then.
+     */
+     var allAdsCompleted = false;
+
+    /**
+     * Handle to interval that repeatedly updates current time.
+     */
+    var updateTimeIntervalHandle;
+
+    /**
+     * Handle to interval that repeatedly checks for seeking.
+     */
+    var seekCheckIntervalHandle;
+
+    /**
      * Interval (ms) on which to check if the user is seeking through the
      * content.
      */
@@ -1562,19 +1769,20 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
      */
     var contentEndedListeners = [];
 
-    settings = extend({}, defaults, options || {});
+    /**
+     * Content and ads ended listeners passed by the publisher to the plugin.
+     * These will be called when the plugin detects that content *and all
+     * ads* have completed. This differs from the contentEndedListeners in that
+     * contentEndedListeners will fire between content ending and a post-roll
+     * playing, whereas the contentAndAdsEndedListeners will fire after the
+     * post-roll completes.
+     */
+     var contentAndAdsEndedListeners = [];
 
-    // Currently this isn't used but I can see it being needed in the future, so
-    // to avoid implementation problems with later updates I'm requiring it.
-    if (!settings['id']) {
-      window.console.log('Error: must provide id of video.js div');
-      return;
-    }
-
-    setInterval(player.ima.updateCurrentTime, seekCheckInterval);
-    setInterval(player.ima.checkForSeeking, seekCheckInterval);
-
-    player.on('ended', function() {
+    /**
+     * Local content ended listener for contentComplete.
+     */
+    var localContentEndedListener = function() {
       if (adsLoader && !contentComplete) {
         adsLoader.contentComplete();
         contentComplete = true;
@@ -1582,12 +1790,49 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
       for (var index in contentEndedListeners) {
         contentEndedListeners[index]();
       }
-    });
+      if (allAdsCompleted) {
+        for (var index in contentAndAdsEndedListeners) {
+          contentAndAdsEndedListeners[index]();
+        }
+      }
+      clearInterval(updateTimeIntervalHandle);
+      clearInterval(seekCheckIntervalHandle);
+      player.one('play', player.ima.setUpPlayerIntervals_);
+    };
 
-    player.ads({debug: settings.debug});
+    settings = extend({}, ima_defaults, options || {});
 
+    // Currently this isn't used but I can see it being needed in the future, so
+    // to avoid implementation problems with later updates I'm requiring it.
+    if (!settings['id']) {
+      window.console.log('Error: must provide id of video.js div');
+      return;
+    }
+    contentPlayer = document.getElementById(settings['id'] + '_html5_api');
+    // Default showing countdown timer to true.
+    showCountdown = true;
+    if (settings['showCountdown'] == false) {
+      showCountdown = false;
+    }
+
+    player.one('play', player.ima.setUpPlayerIntervals_);
+
+    player.on('ended', localContentEndedListener);
+
+    var contrib_ads_defaults = {
+      debug: settings.debug,
+      timeout: settings.timeout,
+      prerollTimeout: settings.prerollTimeout
+    };
+
+    var ads_plugin_settings =
+        extend({}, contrib_ads_defaults, options['contribAdsSettings'] || {});
+
+    player.ads(ads_plugin_settings);
+
+    adsRenderingSettings = new google.ima.AdsRenderingSettings();
+    adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
     if (settings['adsRenderingSettings']) {
-      adsRenderingSettings = new google.ima.AdsRenderingSettings();
       for (var setting in settings['adsRenderingSettings']) {
         adsRenderingSettings[setting] =
             settings['adsRenderingSettings'][setting];
@@ -1602,9 +1847,22 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
 
     adsLoader = new google.ima.AdsLoader(adDisplayContainer);
 
+    adsLoader.getSettings().setVpaidMode(
+        google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+    if (settings.vpaidAllowed == false) {
+      adsLoader.getSettings().setVpaidMode(
+          google.ima.ImaSdkSettings.VpaidMode.DISABLED);
+    }
+    if (settings.vpaidMode) {
+      adsLoader.getSettings().setVpaidMode(settings.vpaidMode);
+    }
+
     if (settings.locale) {
       adsLoader.getSettings().setLocale(settings.locale);
     }
+
+    adsLoader.getSettings().setPlayerType('videojs-ima');
+    adsLoader.getSettings().setPlayerVersion(VERSION);
 
     adsLoader.addEventListener(
       google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
@@ -1629,4 +1887,4 @@ require("/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/vid
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/alexanderbakum/github/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js":2,"video.js":undefined}]},{},[1]);
+},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js":2,"video.js":undefined}]},{},[1]);
