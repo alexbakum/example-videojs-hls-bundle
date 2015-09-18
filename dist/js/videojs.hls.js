@@ -7,17 +7,19 @@ require('contrib/hls/videojs-hls');
 require('contrib/hls/stream');
 require('contrib/hls/flv-tag');
 require('contrib/hls/exp-golomb');
+require('contrib/hls/h264-extradata');
 require('contrib/hls/h264-stream');
 require('contrib/hls/aac-stream');
 require('contrib/hls/metadata-stream');
 require('contrib/hls/segment-parser');
 require('contrib/hls/m3u8/m3u8-parser');
 require('contrib/hls/xhr');
+require('contrib/hls/playlist');
 require('contrib/hls/playlist-loader');
 require('contrib/hls/decrypter');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"contrib/hls/aac-stream":5,"contrib/hls/decrypter":6,"contrib/hls/exp-golomb":7,"contrib/hls/flv-tag":8,"contrib/hls/h264-stream":9,"contrib/hls/m3u8/m3u8-parser":10,"contrib/hls/metadata-stream":11,"contrib/hls/playlist-loader":12,"contrib/hls/segment-parser":13,"contrib/hls/stream":14,"contrib/hls/videojs-hls":15,"contrib/hls/xhr":16,"contrib/media-sources":17,"pkcs7":3}],2:[function(require,module,exports){
+},{"contrib/hls/aac-stream":5,"contrib/hls/decrypter":6,"contrib/hls/exp-golomb":7,"contrib/hls/flv-tag":8,"contrib/hls/h264-extradata":9,"contrib/hls/h264-stream":10,"contrib/hls/m3u8/m3u8-parser":11,"contrib/hls/metadata-stream":12,"contrib/hls/playlist":14,"contrib/hls/playlist-loader":13,"contrib/hls/segment-parser":15,"contrib/hls/stream":16,"contrib/hls/videojs-hls":17,"contrib/hls/xhr":18,"contrib/media-sources":19,"pkcs7":3}],2:[function(require,module,exports){
 /*
  * pkcs7.pad
  * https://github.com/brightcove/pkcs7
@@ -157,7 +159,6 @@ var
 window.videojs.Hls.AacStream = function() {
   var
     next_pts, // :uint
-    pts_offset, // :int
     state, // :uint
     pes_length, // :int
     lastMetaPts,
@@ -177,7 +178,6 @@ window.videojs.Hls.AacStream = function() {
 
   // (pts:uint):void
   this.setTimeStampOffset = function(pts) {
-    pts_offset = pts;
 
     // keep track of the last time a metadata tag was written out
     // set the initial value so metadata will be generated before any
@@ -187,7 +187,7 @@ window.videojs.Hls.AacStream = function() {
 
   // (pts:uint, pes_size:int, dataAligned:Boolean):void
   this.setNextTimeStamp = function(pts, pes_size, dataAligned) {
-    next_pts = pts - pts_offset;
+    next_pts = pts;
     pes_length = pes_size;
 
     // If data is aligned, flush all internal buffers
@@ -420,7 +420,18 @@ window.videojs.Hls.AacStream = function() {
 (function(window, videojs, unpad) {
 'use strict';
 
-var AES, decrypt;
+var AES, AsyncStream, Decrypter, decrypt, ntoh;
+
+/**
+ * Convert network-order (big-endian) bytes into their little-endian
+ * representation.
+ */
+ntoh = function(word) {
+  return (word << 24) |
+    ((word & 0xff00) << 8) |
+    ((word & 0xff0000) >> 8) |
+    (word >>> 24);
+};
 
 /**
  * Schedule out an AES key for both encryption and decryption. This
@@ -431,38 +442,38 @@ var AES, decrypt;
  */
 AES = function (key) {
   this._precompute();
-  
+
   var i, j, tmp,
     encKey, decKey,
     sbox = this._tables[0][4], decTable = this._tables[1],
     keyLen = key.length, rcon = 1;
-  
+
   if (keyLen !== 4 && keyLen !== 6 && keyLen !== 8) {
     throw new Error("Invalid aes key size");
   }
-  
+
   encKey = key.slice(0);
   decKey = [];
   this._key = [encKey, decKey];
-  
+
   // schedule encryption keys
   for (i = keyLen; i < 4 * keyLen + 28; i++) {
     tmp = encKey[i-1];
-    
+
     // apply sbox
     if (i%keyLen === 0 || (keyLen === 8 && i%keyLen === 4)) {
       tmp = sbox[tmp>>>24]<<24 ^ sbox[tmp>>16&255]<<16 ^ sbox[tmp>>8&255]<<8 ^ sbox[tmp&255];
-      
+
       // shift rows and add rcon
       if (i%keyLen === 0) {
         tmp = tmp<<8 ^ tmp>>>24 ^ rcon<<24;
         rcon = rcon<<1 ^ (rcon>>7)*283;
       }
     }
-    
+
     encKey[i] = encKey[i-keyLen] ^ tmp;
   }
-  
+
   // schedule decryption keys
   for (j = 0; i; j++, i--) {
     tmp = encKey[j&3 ? i : i - 4];
@@ -506,127 +517,232 @@ AES.prototype = {
    for (i = 0; i < 256; i++) {
      th[( d[i] = i<<1 ^ (i>>7)*283 )^i]=i;
    }
-   
+
    for (x = xInv = 0; !sbox[x]; x ^= x2 || 1, xInv = th[xInv] || 1) {
      // Compute sbox
      s = xInv ^ xInv<<1 ^ xInv<<2 ^ xInv<<3 ^ xInv<<4;
      s = s>>8 ^ s&255 ^ 99;
      sbox[x] = s;
      sboxInv[s] = x;
-     
+
      // Compute MixColumns
      x8 = d[x4 = d[x2 = d[x]]];
      tDec = x8*0x1010101 ^ x4*0x10001 ^ x2*0x101 ^ x*0x1010100;
      tEnc = d[s]*0x101 ^ s*0x1010100;
-     
+
      for (i = 0; i < 4; i++) {
        encTable[i][x] = tEnc = tEnc<<24 ^ tEnc>>>8;
        decTable[i][s] = tDec = tDec<<24 ^ tDec>>>8;
      }
    }
-   
+
    // Compactify. Considerable speedup on Firefox.
    for (i = 0; i < 5; i++) {
      encTable[i] = encTable[i].slice(0);
      decTable[i] = decTable[i].slice(0);
    }
   },
-  
+
   /**
-   * Decrypt an array of 4 big-endian words.
-   * @param {Array} data The ciphertext.
+   * Decrypt 16 bytes, specified as four 32-bit words.
+   * @param encrypted0 {number} the first word to decrypt
+   * @param encrypted1 {number} the second word to decrypt
+   * @param encrypted2 {number} the third word to decrypt
+   * @param encrypted3 {number} the fourth word to decrypt
+   * @param out {Int32Array} the array to write the decrypted words
+   * into
+   * @param offset {number} the offset into the output array to start
+   * writing results
    * @return {Array} The plaintext.
    */
-  decrypt:function (input) {
-    if (input.length !== 4) {
-      throw new Error("Invalid aes block size");
-    }
-    
+  decrypt:function (encrypted0, encrypted1, encrypted2, encrypted3, out, offset) {
     var key = this._key[1],
         // state variables a,b,c,d are loaded with pre-whitened data
-        a = input[0]           ^ key[0],
-        b = input[3] ^ key[1],
-        c = input[2]           ^ key[2],
-        d = input[1] ^ key[3],
+        a = encrypted0 ^ key[0],
+        b = encrypted3 ^ key[1],
+        c = encrypted2 ^ key[2],
+        d = encrypted1 ^ key[3],
         a2, b2, c2,
-        
-        nInnerRounds = key.length/4 - 2,
+
+        nInnerRounds = key.length / 4 - 2, // key.length === 2 ?
         i,
         kIndex = 4,
-        out = [0,0,0,0],
         table = this._tables[1],
-        
+
         // load up the tables
-        t0    = table[0],
-        t1    = table[1],
-        t2    = table[2],
-        t3    = table[3],
+        table0    = table[0],
+        table1    = table[1],
+        table2    = table[2],
+        table3    = table[3],
         sbox  = table[4];
- 
+
     // Inner rounds. Cribbed from OpenSSL.
     for (i = 0; i < nInnerRounds; i++) {
-      a2 = t0[a>>>24] ^ t1[b>>16 & 255] ^ t2[c>>8 & 255] ^ t3[d & 255] ^ key[kIndex];
-      b2 = t0[b>>>24] ^ t1[c>>16 & 255] ^ t2[d>>8 & 255] ^ t3[a & 255] ^ key[kIndex + 1];
-      c2 = t0[c>>>24] ^ t1[d>>16 & 255] ^ t2[a>>8 & 255] ^ t3[b & 255] ^ key[kIndex + 2];
-      d  = t0[d>>>24] ^ t1[a>>16 & 255] ^ t2[b>>8 & 255] ^ t3[c & 255] ^ key[kIndex + 3];
+      a2 = table0[a>>>24] ^ table1[b>>16 & 255] ^ table2[c>>8 & 255] ^ table3[d & 255] ^ key[kIndex];
+      b2 = table0[b>>>24] ^ table1[c>>16 & 255] ^ table2[d>>8 & 255] ^ table3[a & 255] ^ key[kIndex + 1];
+      c2 = table0[c>>>24] ^ table1[d>>16 & 255] ^ table2[a>>8 & 255] ^ table3[b & 255] ^ key[kIndex + 2];
+      d  = table0[d>>>24] ^ table1[a>>16 & 255] ^ table2[b>>8 & 255] ^ table3[c & 255] ^ key[kIndex + 3];
       kIndex += 4;
       a=a2; b=b2; c=c2;
     }
-        
+
     // Last round.
     for (i = 0; i < 4; i++) {
-      out[3 & -i] =
-        sbox[a>>>24      ]<<24 ^ 
+      out[(3 & -i) + offset] =
+        sbox[a>>>24      ]<<24 ^
         sbox[b>>16  & 255]<<16 ^
         sbox[c>>8   & 255]<<8  ^
         sbox[d      & 255]     ^
         key[kIndex++];
       a2=a; a=b; b=c; c=d; d=a2;
     }
-    
-    return out;
   }
 };
 
+/**
+ * Decrypt bytes using AES-128 with CBC and PKCS#7 padding.
+ * @param encrypted {Uint8Array} the encrypted bytes
+ * @param key {Uint32Array} the bytes of the decryption key
+ * @param initVector {Uint32Array} the initialization vector (IV) to
+ * use for the first round of CBC.
+ * @return {Uint8Array} the decrypted bytes
+ *
+ * @see http://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+ * @see http://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_Block_Chaining_.28CBC.29
+ * @see https://tools.ietf.org/html/rfc2315
+ */
 decrypt = function(encrypted, key, initVector) {
   var
-    encryptedView = new DataView(encrypted.buffer),
-    platformEndian = new Uint32Array(encrypted.byteLength / 4),
-    decipher = new AES(Array.prototype.slice.call(key)),
-    decrypted = new Uint8Array(encrypted.byteLength),
-    decryptedView = new DataView(decrypted.buffer),
-    decryptedBlock,
-    word,
-    byte;
+    // word-level access to the encrypted bytes
+    encrypted32 = new Int32Array(encrypted.buffer, encrypted.byteOffset, encrypted.byteLength >> 2),
 
-  // convert big-endian input to platform byte order for decryption
-  for (byte = 0; byte < encrypted.byteLength; byte += 4) {
-    platformEndian[byte >>> 2] = encryptedView.getUint32(byte);
-  }
+    decipher = new AES(Array.prototype.slice.call(key)),
+
+    // byte and word-level access for the decrypted output
+    decrypted = new Uint8Array(encrypted.byteLength),
+    decrypted32 = new Int32Array(decrypted.buffer),
+
+    // temporary variables for working with the IV, encrypted, and
+    // decrypted data
+    init0, init1, init2, init3,
+    encrypted0, encrypted1, encrypted2, encrypted3,
+
+    // iteration variable
+    wordIx;
+
+  // pull out the words of the IV to ensure we don't modify the
+  // passed-in reference and easier access
+  init0 = initVector[0];
+  init1 = initVector[1];
+  init2 = initVector[2];
+  init3 = initVector[3];
+
   // decrypt four word sequences, applying cipher-block chaining (CBC)
   // to each decrypted block
-  for (word = 0; word < platformEndian.length; word += 4) {
+  for (wordIx = 0; wordIx < encrypted32.length; wordIx += 4) {
+    // convert big-endian (network order) words into little-endian
+    // (javascript order)
+    encrypted0 = ntoh(encrypted32[wordIx]);
+    encrypted1 = ntoh(encrypted32[wordIx + 1]);
+    encrypted2 = ntoh(encrypted32[wordIx + 2]);
+    encrypted3 = ntoh(encrypted32[wordIx + 3]);
+
     // decrypt the block
-    decryptedBlock = decipher.decrypt(platformEndian.subarray(word, word + 4));
+    decipher.decrypt(encrypted0,
+                     encrypted1,
+                     encrypted2,
+                     encrypted3,
+                     decrypted32,
+                     wordIx);
 
     // XOR with the IV, and restore network byte-order to obtain the
     // plaintext
-    byte = word << 2;
-    decryptedView.setUint32(byte, decryptedBlock[0] ^ initVector[0]);
-    decryptedView.setUint32(byte + 4, decryptedBlock[1] ^ initVector[1]);
-    decryptedView.setUint32(byte + 8, decryptedBlock[2] ^ initVector[2]);
-    decryptedView.setUint32(byte + 12, decryptedBlock[3] ^ initVector[3]);
+    decrypted32[wordIx]     = ntoh(decrypted32[wordIx] ^ init0);
+    decrypted32[wordIx + 1] = ntoh(decrypted32[wordIx + 1] ^ init1);
+    decrypted32[wordIx + 2] = ntoh(decrypted32[wordIx + 2] ^ init2);
+    decrypted32[wordIx + 3] = ntoh(decrypted32[wordIx + 3] ^ init3);
 
     // setup the IV for the next round
-    initVector = platformEndian.subarray(word, word + 4);
+    init0 = encrypted0;
+    init1 = encrypted1;
+    init2 = encrypted2;
+    init3 = encrypted3;
   }
 
-  // remove any padding
-  return unpad(decrypted);
+  return decrypted;
 };
+
+AsyncStream = function() {
+  this.jobs = [];
+  this.delay = 1;
+  this.timeout_ = null;
+};
+AsyncStream.prototype = new videojs.Hls.Stream();
+AsyncStream.prototype.processJob_ = function() {
+  this.jobs.shift()();
+  if (this.jobs.length) {
+    this.timeout_ = setTimeout(videojs.bind(this, this.processJob_),
+                               this.delay);
+  } else {
+    this.timeout_ = null;
+  }
+};
+AsyncStream.prototype.push = function(job) {
+  this.jobs.push(job);
+  if (!this.timeout_) {
+    this.timeout_ = setTimeout(videojs.bind(this, this.processJob_),
+                               this.delay);
+  }
+};
+
+Decrypter = function(encrypted, key, initVector, done) {
+  var
+    step = Decrypter.STEP,
+    encrypted32 = new Int32Array(encrypted.buffer),
+    decrypted = new Uint8Array(encrypted.byteLength),
+    i = 0;
+  this.asyncStream_ = new AsyncStream();
+
+  // split up the encryption job and do the individual chunks asynchronously
+  this.asyncStream_.push(this.decryptChunk_(encrypted32.subarray(i, i + step),
+                                            key,
+                                            initVector,
+                                            decrypted,
+                                            i));
+  for (i = step; i < encrypted32.length; i += step) {
+    initVector = new Uint32Array([
+      ntoh(encrypted32[i - 4]),
+      ntoh(encrypted32[i - 3]),
+      ntoh(encrypted32[i - 2]),
+      ntoh(encrypted32[i - 1])
+    ]);
+    this.asyncStream_.push(this.decryptChunk_(encrypted32.subarray(i, i + step),
+                                              key,
+                                              initVector,
+                                              decrypted));
+  }
+  // invoke the done() callback when everything is finished
+  this.asyncStream_.push(function() {
+    // remove pkcs#7 padding from the decrypted bytes
+    done(null, unpad(decrypted));
+  });
+};
+Decrypter.prototype = new videojs.Hls.Stream();
+Decrypter.prototype.decryptChunk_ = function(encrypted, key, initVector, decrypted) {
+  return function() {
+    var bytes = decrypt(encrypted,
+                        key,
+                        initVector);
+    decrypted.set(bytes, encrypted.byteOffset);
+  };
+};
+// the maximum number of bytes to process at one time
+Decrypter.STEP = 4 * 8000;
 
 // exports
 videojs.Hls.decrypt = decrypt;
+videojs.Hls.Decrypter = Decrypter;
+videojs.Hls.AsyncStream = AsyncStream;
 
 })(window, window.videojs, window.pkcs7.unpad);
 
@@ -796,6 +912,11 @@ window.videojs.Hls.ExpGolomb = function(workingData) {
 
 ; videojs = global.videojs = require("video.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
+/**
+ * An object that stores the bytes of an FLV tag and methods for
+ * querying and manipulating that data.
+ * @see http://download.macromedia.com/f4v/video_file_format_spec_v10_1.pdf
+ */
 (function(window) {
 
 window.videojs = window.videojs || {};
@@ -1162,222 +1283,230 @@ hls.FlvTag.frameTime = function(tag) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"video.js":undefined}],9:[function(require,module,exports){
+(function() {
+  var
+    H264ExtraData,
+    ExpGolomb = window.videojs.Hls.ExpGolomb,
+    FlvTag = window.videojs.Hls.FlvTag;
+
+  window.videojs.Hls.H264ExtraData = H264ExtraData = function() {
+    this.sps = []; // :Array
+    this.pps = []; // :Array
+  };
+
+  H264ExtraData.prototype.extraDataExists = function() { // :Boolean
+    return this.sps.length > 0;
+  };
+
+  // (sizeOfScalingList:int, expGolomb:ExpGolomb):void
+  H264ExtraData.prototype.scaling_list = function(sizeOfScalingList, expGolomb) {
+    var
+      lastScale = 8, // :int
+      nextScale = 8, // :int
+      j,
+      delta_scale; // :int
+
+    for (j = 0; j < sizeOfScalingList; ++j) {
+      if (0 !== nextScale) {
+        delta_scale = expGolomb.readExpGolomb();
+        nextScale = (lastScale + delta_scale + 256) % 256;
+        //useDefaultScalingMatrixFlag = ( j = = 0 && nextScale = = 0 )
+      }
+
+      lastScale = (nextScale === 0) ? lastScale : nextScale;
+      // scalingList[ j ] = ( nextScale == 0 ) ? lastScale : nextScale;
+      // lastScale = scalingList[ j ]
+    }
+  };
+
+  /**
+   * RBSP: raw bit-stream payload. The actual encoded video data.
+   *
+   * SPS: sequence parameter set. Part of the RBSP. Metadata to be applied
+   * to a complete video sequence, like width and height.
+   */
+  H264ExtraData.prototype.getSps0Rbsp = function() { // :ByteArray
+    var
+      sps = this.sps[0],
+      offset = 1,
+      start = 1,
+      written = 0,
+      end = sps.byteLength - 2,
+      result = new Uint8Array(sps.byteLength);
+
+    // In order to prevent 0x0000 01 from being interpreted as a
+    // NAL start code, occurences of that byte sequence in the
+    // RBSP are escaped with an "emulation byte". That turns
+    // sequences of 0x0000 01 into 0x0000 0301. When interpreting
+    // a NAL payload, they must be filtered back out.
+    while (offset < end) {
+      if (sps[offset]     === 0x00 &&
+          sps[offset + 1] === 0x00 &&
+          sps[offset + 2] === 0x03) {
+        result.set(sps.subarray(start, offset + 1), written);
+        written += offset + 1 - start;
+        start = offset + 3;
+      }
+      offset++;
+    }
+    result.set(sps.subarray(start), written);
+    return result.subarray(0, written + (sps.byteLength - start));
+  };
+
+  // (pts:uint):FlvTag
+  H264ExtraData.prototype.metaDataTag = function(pts) {
+    var
+      tag = new FlvTag(FlvTag.METADATA_TAG), // :FlvTag
+      expGolomb, // :ExpGolomb
+      profile_idc, // :int
+      chroma_format_idc, // :int
+      imax, // :int
+      i, // :int
+
+      pic_order_cnt_type, // :int
+      num_ref_frames_in_pic_order_cnt_cycle, // :uint
+
+      pic_width_in_mbs_minus1, // :int
+      pic_height_in_map_units_minus1, // :int
+
+      frame_mbs_only_flag, // :int
+      frame_cropping_flag, // :Boolean
+
+      frame_crop_left_offset = 0, // :int
+      frame_crop_right_offset = 0, // :int
+      frame_crop_top_offset = 0, // :int
+      frame_crop_bottom_offset = 0, // :int
+
+      width,
+      height;
+
+      tag.dts = pts;
+      tag.pts = pts;
+      expGolomb = new ExpGolomb(this.getSps0Rbsp());
+
+    // :int = expGolomb.readUnsignedByte(); // profile_idc u(8)
+    profile_idc = expGolomb.readUnsignedByte();
+
+    // constraint_set[0-5]_flag, u(1), reserved_zero_2bits u(2), level_idc u(8)
+    expGolomb.skipBits(16);
+
+    // seq_parameter_set_id
+    expGolomb.skipUnsignedExpGolomb();
+
+    if (profile_idc === 100 ||
+        profile_idc === 110 ||
+        profile_idc === 122 ||
+        profile_idc === 244 ||
+        profile_idc === 44 ||
+        profile_idc === 83 ||
+        profile_idc === 86 ||
+        profile_idc === 118 ||
+        profile_idc === 128) {
+      chroma_format_idc = expGolomb.readUnsignedExpGolomb();
+      if (3 === chroma_format_idc) {
+        expGolomb.skipBits(1); // separate_colour_plane_flag
+      }
+      expGolomb.skipUnsignedExpGolomb(); // bit_depth_luma_minus8
+      expGolomb.skipUnsignedExpGolomb(); // bit_depth_chroma_minus8
+      expGolomb.skipBits(1); // qpprime_y_zero_transform_bypass_flag
+      if (expGolomb.readBoolean()) { // seq_scaling_matrix_present_flag
+        imax = (chroma_format_idc !== 3) ? 8 : 12;
+        for (i = 0 ; i < imax ; ++i) {
+          if (expGolomb.readBoolean()) { // seq_scaling_list_present_flag[ i ]
+            if (i < 6) {
+              this.scaling_list(16, expGolomb);
+            } else {
+              this.scaling_list(64, expGolomb);
+            }
+          }
+        }
+      }
+    }
+
+    expGolomb.skipUnsignedExpGolomb(); // log2_max_frame_num_minus4
+    pic_order_cnt_type = expGolomb.readUnsignedExpGolomb();
+
+    if ( 0 === pic_order_cnt_type ) {
+      expGolomb.readUnsignedExpGolomb(); //log2_max_pic_order_cnt_lsb_minus4
+    } else if ( 1 === pic_order_cnt_type ) {
+      expGolomb.skipBits(1); // delta_pic_order_always_zero_flag
+      expGolomb.skipExpGolomb(); // offset_for_non_ref_pic
+      expGolomb.skipExpGolomb(); // offset_for_top_to_bottom_field
+      num_ref_frames_in_pic_order_cnt_cycle = expGolomb.readUnsignedExpGolomb();
+      for(i = 0 ; i < num_ref_frames_in_pic_order_cnt_cycle ; ++i) {
+        expGolomb.skipExpGolomb(); // offset_for_ref_frame[ i ]
+      }
+    }
+
+    expGolomb.skipUnsignedExpGolomb(); // max_num_ref_frames
+    expGolomb.skipBits(1); // gaps_in_frame_num_value_allowed_flag
+    pic_width_in_mbs_minus1 = expGolomb.readUnsignedExpGolomb();
+    pic_height_in_map_units_minus1 = expGolomb.readUnsignedExpGolomb();
+
+    frame_mbs_only_flag = expGolomb.readBits(1);
+    if (0 === frame_mbs_only_flag) {
+      expGolomb.skipBits(1); // mb_adaptive_frame_field_flag
+    }
+
+    expGolomb.skipBits(1); // direct_8x8_inference_flag
+    frame_cropping_flag = expGolomb.readBoolean();
+    if (frame_cropping_flag) {
+      frame_crop_left_offset = expGolomb.readUnsignedExpGolomb();
+      frame_crop_right_offset = expGolomb.readUnsignedExpGolomb();
+      frame_crop_top_offset = expGolomb.readUnsignedExpGolomb();
+      frame_crop_bottom_offset = expGolomb.readUnsignedExpGolomb();
+    }
+
+    width = ((pic_width_in_mbs_minus1 + 1) * 16) - frame_crop_left_offset * 2 - frame_crop_right_offset * 2;
+    height = ((2 - frame_mbs_only_flag) * (pic_height_in_map_units_minus1 + 1) * 16) - (frame_crop_top_offset * 2) - (frame_crop_bottom_offset * 2);
+
+    tag.writeMetaDataDouble("videocodecid", 7);
+    tag.writeMetaDataDouble("width", width);
+    tag.writeMetaDataDouble("height", height);
+    // tag.writeMetaDataDouble("videodatarate", 0 );
+    // tag.writeMetaDataDouble("framerate", 0);
+
+    return tag;
+  };
+
+  // (pts:uint):FlvTag
+  H264ExtraData.prototype.extraDataTag = function(pts) {
+    var
+      i,
+      tag = new FlvTag(FlvTag.VIDEO_TAG, true);
+
+    tag.dts = pts;
+    tag.pts = pts;
+
+    tag.writeByte(0x01);// version
+    tag.writeByte(this.sps[0][1]);// profile
+    tag.writeByte(this.sps[0][2]);// compatibility
+    tag.writeByte(this.sps[0][3]);// level
+    tag.writeByte(0xFC | 0x03); // reserved (6 bits), NULA length size - 1 (2 bits)
+    tag.writeByte(0xE0 | 0x01 ); // reserved (3 bits), num of SPS (5 bits)
+    tag.writeShort( this.sps[0].length ); // data of SPS
+    tag.writeBytes( this.sps[0] ); // SPS
+
+    tag.writeByte( this.pps.length ); // num of PPS (will there ever be more that 1 PPS?)
+    for (i = 0 ; i < this.pps.length ; ++i) {
+      tag.writeShort(this.pps[i].length); // 2 bytes for length of PPS
+      tag.writeBytes(this.pps[i]); // data of PPS
+    }
+
+    return tag;
+  };
+})();
+
+},{}],10:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
-    ExpGolomb = window.videojs.Hls.ExpGolomb,
     FlvTag = window.videojs.Hls.FlvTag,
-
-    H264ExtraData = function() {
-      this.sps = []; // :Array
-      this.pps = []; // :Array
-
-      this.extraDataExists = function() { // :Boolean
-        return this.sps.length > 0;
-      };
-
-      // (sizeOfScalingList:int, expGolomb:ExpGolomb):void
-      this.scaling_list = function(sizeOfScalingList, expGolomb) {
-        var
-          lastScale = 8, // :int
-          nextScale = 8, // :int
-          j,
-          delta_scale; // :int
-
-        for (j = 0; j < sizeOfScalingList; ++j) {
-          if (0 !== nextScale) {
-            delta_scale = expGolomb.readExpGolomb();
-            nextScale = (lastScale + delta_scale + 256) % 256;
-            //useDefaultScalingMatrixFlag = ( j = = 0 && nextScale = = 0 )
-          }
-
-          lastScale = (nextScale === 0) ? lastScale : nextScale;
-          // scalingList[ j ] = ( nextScale == 0 ) ? lastScale : nextScale;
-          // lastScale = scalingList[ j ]
-        }
-      };
-
-      /**
-       * RBSP: raw bit-stream payload. The actual encoded video data.
-       *
-       * SPS: sequence parameter set. Part of the RBSP. Metadata to be applied
-       * to a complete video sequence, like width and height.
-       */
-      this.getSps0Rbsp = function() { // :ByteArray
-        var
-          sps = this.sps[0],
-          offset = 1,
-          start = 1,
-          written = 0,
-          end = sps.byteLength - 2,
-          result = new Uint8Array(sps.byteLength);
-
-        // In order to prevent 0x0000 01 from being interpreted as a
-        // NAL start code, occurences of that byte sequence in the
-        // RBSP are escaped with an "emulation byte". That turns
-        // sequences of 0x0000 01 into 0x0000 0301. When interpreting
-        // a NAL payload, they must be filtered back out.
-        while (offset < end) {
-          if (sps[offset]     === 0x00 &&
-              sps[offset + 1] === 0x00 &&
-              sps[offset + 2] === 0x03) {
-            result.set(sps.subarray(start, offset + 1), written);
-            written += offset + 1 - start;
-            start = offset + 3;
-          }
-          offset++;
-        }
-        result.set(sps.subarray(start), written);
-        return result.subarray(0, written + (sps.byteLength - start));
-      };
-
-      // (pts:uint):FlvTag
-      this.metaDataTag = function(pts) {
-        var
-          tag = new FlvTag(FlvTag.METADATA_TAG), // :FlvTag
-          expGolomb, // :ExpGolomb
-          profile_idc, // :int
-          chroma_format_idc, // :int
-          imax, // :int
-          i, // :int
-
-          pic_order_cnt_type, // :int
-          num_ref_frames_in_pic_order_cnt_cycle, // :uint
-
-          pic_width_in_mbs_minus1, // :int
-          pic_height_in_map_units_minus1, // :int
-
-          frame_mbs_only_flag, // :int
-          frame_cropping_flag, // :Boolean
-
-          frame_crop_left_offset = 0, // :int
-          frame_crop_right_offset = 0, // :int
-          frame_crop_top_offset = 0, // :int
-          frame_crop_bottom_offset = 0, // :int
-
-          width,
-          height;
-
-          tag.dts = pts;
-          tag.pts = pts;
-          expGolomb = new ExpGolomb(this.getSps0Rbsp());
-
-        // :int = expGolomb.readUnsignedByte(); // profile_idc u(8)
-        profile_idc = expGolomb.readUnsignedByte();
-
-        // constraint_set[0-5]_flag, u(1), reserved_zero_2bits u(2), level_idc u(8)
-        expGolomb.skipBits(16);
-
-        // seq_parameter_set_id
-        expGolomb.skipUnsignedExpGolomb();
-
-        if (profile_idc === 100 ||
-            profile_idc === 110 ||
-            profile_idc === 122 ||
-            profile_idc === 244 ||
-            profile_idc === 44 ||
-            profile_idc === 83 ||
-            profile_idc === 86 ||
-            profile_idc === 118 ||
-            profile_idc === 128) {
-          chroma_format_idc = expGolomb.readUnsignedExpGolomb();
-          if (3 === chroma_format_idc) {
-            expGolomb.skipBits(1); // separate_colour_plane_flag
-          }
-          expGolomb.skipUnsignedExpGolomb(); // bit_depth_luma_minus8
-          expGolomb.skipUnsignedExpGolomb(); // bit_depth_chroma_minus8
-          expGolomb.skipBits(1); // qpprime_y_zero_transform_bypass_flag
-          if (expGolomb.readBoolean()) { // seq_scaling_matrix_present_flag
-            imax = (chroma_format_idc !== 3) ? 8 : 12;
-            for (i = 0 ; i < imax ; ++i) {
-              if (expGolomb.readBoolean()) { // seq_scaling_list_present_flag[ i ]
-                if (i < 6) {
-                  this.scaling_list(16, expGolomb);
-                } else {
-                  this.scaling_list(64, expGolomb);
-                }
-              }
-            }
-          }
-        }
-
-        expGolomb.skipUnsignedExpGolomb(); // log2_max_frame_num_minus4
-        pic_order_cnt_type = expGolomb.readUnsignedExpGolomb();
-
-        if ( 0 === pic_order_cnt_type ) {
-          expGolomb.readUnsignedExpGolomb(); //log2_max_pic_order_cnt_lsb_minus4
-        } else if ( 1 === pic_order_cnt_type ) {
-          expGolomb.skipBits(1); // delta_pic_order_always_zero_flag
-          expGolomb.skipExpGolomb(); // offset_for_non_ref_pic
-          expGolomb.skipExpGolomb(); // offset_for_top_to_bottom_field
-          num_ref_frames_in_pic_order_cnt_cycle = expGolomb.readUnsignedExpGolomb();
-          for(i = 0 ; i < num_ref_frames_in_pic_order_cnt_cycle ; ++i) {
-            expGolomb.skipExpGolomb(); // offset_for_ref_frame[ i ]
-          }
-        }
-
-        expGolomb.skipUnsignedExpGolomb(); // max_num_ref_frames
-        expGolomb.skipBits(1); // gaps_in_frame_num_value_allowed_flag
-        pic_width_in_mbs_minus1 = expGolomb.readUnsignedExpGolomb();
-        pic_height_in_map_units_minus1 = expGolomb.readUnsignedExpGolomb();
-
-        frame_mbs_only_flag = expGolomb.readBits(1);
-        if (0 === frame_mbs_only_flag) {
-          expGolomb.skipBits(1); // mb_adaptive_frame_field_flag
-        }
-
-        expGolomb.skipBits(1); // direct_8x8_inference_flag
-        frame_cropping_flag = expGolomb.readBoolean();
-        if (frame_cropping_flag) {
-          frame_crop_left_offset = expGolomb.readUnsignedExpGolomb();
-          frame_crop_right_offset = expGolomb.readUnsignedExpGolomb();
-          frame_crop_top_offset = expGolomb.readUnsignedExpGolomb();
-          frame_crop_bottom_offset = expGolomb.readUnsignedExpGolomb();
-        }
-
-        width = ((pic_width_in_mbs_minus1 + 1) * 16) - frame_crop_left_offset * 2 - frame_crop_right_offset * 2;
-        height = ((2 - frame_mbs_only_flag) * (pic_height_in_map_units_minus1 + 1) * 16) - (frame_crop_top_offset * 2) - (frame_crop_bottom_offset * 2);
-
-        tag.writeMetaDataDouble("videocodecid", 7);
-        tag.writeMetaDataDouble("width", width);
-        tag.writeMetaDataDouble("height", height);
-        // tag.writeMetaDataDouble("videodatarate", 0 );
-        // tag.writeMetaDataDouble("framerate", 0);
-
-        return tag;
-      };
-
-      // (pts:uint):FlvTag
-      this.extraDataTag = function(pts) {
-        var
-          i,
-          tag = new FlvTag(FlvTag.VIDEO_TAG, true);
-
-        tag.dts = pts;
-        tag.pts = pts;
-
-        tag.writeByte(0x01);// version
-        tag.writeByte(this.sps[0][1]);// profile
-        tag.writeByte(this.sps[0][2]);// compatibility
-        tag.writeByte(this.sps[0][3]);// level
-        tag.writeByte(0xFC | 0x03); // reserved (6 bits), NULA length size - 1 (2 bits)
-        tag.writeByte(0xE0 | 0x01 ); // reserved (3 bits), num of SPS (5 bits)
-        tag.writeShort( this.sps[0].length ); // data of SPS
-        tag.writeBytes( this.sps[0] ); // SPS
-
-        tag.writeByte( this.pps.length ); // num of PPS (will there ever be more that 1 PPS?)
-        for (i = 0 ; i < this.pps.length ; ++i) {
-          tag.writeShort(this.pps[i].length); // 2 bytes for length of PPS
-          tag.writeBytes(this.pps[i]); // data of PPS
-        }
-
-        return tag;
-      };
-    },
-
+    H264ExtraData = window.videojs.Hls.H264ExtraData,
+    H264Stream,
     NALUnitType;
 
   /**
@@ -1409,241 +1538,240 @@ hls.FlvTag.frameTime = function(tag) {
     end_of_stream_rbsp: 11
   };
 
-  window.videojs.Hls.H264Stream = function() {
-    var
-      next_pts, // :uint;
-      next_dts, // :uint;
-      pts_offset, // :int
+  window.videojs.Hls.H264Stream = H264Stream = function() {
+    this._next_pts = 0; // :uint;
+    this._next_dts = 0; // :uint;
 
-      h264Frame, // :FlvTag
+    this._h264Frame = null; // :FlvTag
 
-      oldExtraData = new H264ExtraData(), // :H264ExtraData
-      newExtraData = new H264ExtraData(), // :H264ExtraData
+    this._oldExtraData = new H264ExtraData(); // :H264ExtraData
+    this._newExtraData = new H264ExtraData(); // :H264ExtraData
 
-      nalUnitType = -1, // :int
+    this._nalUnitType = -1; // :int
 
-      state; // :uint;
+    this._state = 0; // :uint;
 
     this.tags = [];
+  };
 
-    //(pts:uint):void
-    this.setTimeStampOffset = function(pts) {
-      pts_offset = pts;
-    };
+  //(pts:uint):void
+  H264Stream.prototype.setTimeStampOffset = function() {};
 
-    //(pts:uint, dts:uint, dataAligned:Boolean):void
-    this.setNextTimeStamp = function(pts, dts, dataAligned) {
-      // We could end up with a DTS less than 0 here. We need to deal with that!
-      next_pts = pts - pts_offset;
-      next_dts = dts - pts_offset;
+  //(pts:uint, dts:uint, dataAligned:Boolean):void
+  H264Stream.prototype.setNextTimeStamp = function(pts, dts, dataAligned) {
+    // We could end up with a DTS less than 0 here. We need to deal with that!
+    this._next_pts = pts;
+    this._next_dts = dts;
 
-      // If data is aligned, flush all internal buffers
-      if (dataAligned) {
-        this.finishFrame();
-      }
-    };
+    // If data is aligned, flush all internal buffers
+    if (dataAligned) {
+      this.finishFrame();
+    }
+  };
 
-    this.finishFrame = function() {
-      if (h264Frame) {
-        // Push SPS before EVERY IDR frame for seeking
-        if (newExtraData.extraDataExists()) {
-          oldExtraData = newExtraData;
-          newExtraData = new H264ExtraData();
-        }
-
-        if (h264Frame.keyFrame) {
-          // Push extra data on every IDR frame in case we did a stream change + seek
-          this.tags.push(oldExtraData.metaDataTag(h264Frame.pts));
-          this.tags.push(oldExtraData.extraDataTag(h264Frame.pts));
-        }
-
-        h264Frame.endNalUnit();
-        this.tags.push(h264Frame);
-
+  H264Stream.prototype.finishFrame = function() {
+    if (this._h264Frame) {
+      // Push SPS before EVERY IDR frame for seeking
+      if (this._newExtraData.extraDataExists()) {
+        this._oldExtraData = this._newExtraData;
+        this._newExtraData = new H264ExtraData();
       }
 
-      h264Frame = null;
-      nalUnitType = -1;
-      state = 0;
-    };
-
-    // (data:ByteArray, o:int, l:int):void
-    this.writeBytes = function(data, offset, length) {
-      var
-        nalUnitSize, // :uint
-        start, // :uint
-        end, // :uint
-        t; // :int
-
-      // default argument values
-      offset = offset || 0;
-      length = length || 0;
-
-      if (length <= 0) {
-        // data is empty so there's nothing to write
-        return;
+      // Check if keyframe and the length of tags.
+      // This makes sure we write metadata on the first frame of a segment.
+      if (this._oldExtraData.extraDataExists() &&
+          (this._h264Frame.keyFrame || this.tags.length === 0)) {
+        // Push extra data on every IDR frame in case we did a stream change + seek
+        this.tags.push(this._oldExtraData.metaDataTag(this._h264Frame.pts));
+        this.tags.push(this._oldExtraData.extraDataTag(this._h264Frame.pts));
       }
 
-      // scan through the bytes until we find the start code (0x000001) for a
-      // NAL unit and then begin writing it out
-      // strip NAL start codes as we go
-      switch (state) {
-      default:
-        /* falls through */
-      case 0:
-        state = 1;
-        /* falls through */
-      case 1:
-        // A NAL unit may be split across two TS packets. Look back a bit to
-        // make sure the prefix of the start code wasn't already written out.
-        if (data[offset] <= 1) {
-          nalUnitSize = h264Frame ? h264Frame.nalUnitSize() : 0;
-          if (nalUnitSize >= 1 && h264Frame.negIndex(1) === 0) {
-            // ?? ?? 00 | O[01] ?? ??
-            if (data[offset] === 1 &&
-                nalUnitSize >= 2 &&
-                h264Frame.negIndex(2) === 0) {
-              // ?? 00 00 : 01
-              if (3 <= nalUnitSize && 0 === h264Frame.negIndex(3)) {
-                h264Frame.length -= 3; // 00 00 00 : 01
-              } else {
-                h264Frame.length -= 2; // 00 00 : 01
-              }
+      this._h264Frame.endNalUnit();
+      this.tags.push(this._h264Frame);
 
-              state = 3;
-              return this.writeBytes(data, offset + 1, length - 1);
+    }
+
+    this._h264Frame = null;
+    this._nalUnitType = -1;
+    this._state = 0;
+  };
+
+  // (data:ByteArray, o:int, l:int):void
+  H264Stream.prototype.writeBytes = function(data, offset, length) {
+    var
+      nalUnitSize, // :uint
+      start, // :uint
+      end, // :uint
+      t; // :int
+
+    // default argument values
+    offset = offset || 0;
+    length = length || 0;
+
+    if (length <= 0) {
+      // data is empty so there's nothing to write
+      return;
+    }
+
+    // scan through the bytes until we find the start code (0x000001) for a
+    // NAL unit and then begin writing it out
+    // strip NAL start codes as we go
+    switch (this._state) {
+    default:
+      /* falls through */
+    case 0:
+      this._state = 1;
+      /* falls through */
+    case 1:
+      // A NAL unit may be split across two TS packets. Look back a bit to
+      // make sure the prefix of the start code wasn't already written out.
+      if (data[offset] <= 1) {
+        nalUnitSize = this._h264Frame ? this._h264Frame.nalUnitSize() : 0;
+        if (nalUnitSize >= 1 && this._h264Frame.negIndex(1) === 0) {
+          // ?? ?? 00 | O[01] ?? ??
+          if (data[offset] === 1 &&
+              nalUnitSize >= 2 &&
+              this._h264Frame.negIndex(2) === 0) {
+            // ?? 00 00 : 01
+            if (3 <= nalUnitSize && 0 === this._h264Frame.negIndex(3)) {
+              this._h264Frame.length -= 3; // 00 00 00 : 01
+            } else {
+              this._h264Frame.length -= 2; // 00 00 : 01
             }
 
-            if (length > 1 && data[offset] === 0 && data[offset + 1] === 1) {
-              // ?? 00 | 00 01
-              if (nalUnitSize >= 2 && h264Frame.negIndex(2) === 0) {
-                h264Frame.length -= 2; // 00 00 : 00 01
-              } else {
-                h264Frame.length -= 1; // 00 : 00 01
-              }
+            this._state = 3;
+            return this.writeBytes(data, offset + 1, length - 1);
+          }
 
-              state = 3;
-              return this.writeBytes(data, offset + 2, length - 2);
+          if (length > 1 && data[offset] === 0 && data[offset + 1] === 1) {
+            // ?? 00 | 00 01
+            if (nalUnitSize >= 2 && this._h264Frame.negIndex(2) === 0) {
+              this._h264Frame.length -= 2; // 00 00 : 00 01
+            } else {
+              this._h264Frame.length -= 1; // 00 : 00 01
             }
 
-            if (length > 2 &&
-                data[offset] === 0 &&
-                data[offset + 1] === 0 &&
-                data[offset + 2] === 1) {
-              // 00 : 00 00 01
-              // h264Frame.length -= 1;
-              state = 3;
-              return this.writeBytes(data, offset + 3, length - 3);
-            }
+            this._state = 3;
+            return this.writeBytes(data, offset + 2, length - 2);
+          }
+
+          if (length > 2 &&
+              data[offset] === 0 &&
+              data[offset + 1] === 0 &&
+              data[offset + 2] === 1) {
+            // 00 : 00 00 01
+            // this._h264Frame.length -= 1;
+            this._state = 3;
+            return this.writeBytes(data, offset + 3, length - 3);
           }
         }
-        // allow fall through if the above fails, we may end up checking a few
-        // bytes a second time. But that case will be VERY rare
-        state = 2;
-        /* falls through */
-      case 2:
-        // Look for start codes in the data from the current offset forward
-        start = offset;
-        end = start + length;
-        for (t = end - 3; offset < t;) {
-          if (data[offset + 2] > 1) {
-            // if data[offset + 2] is greater than 1, there is no way a start
-            // code can begin before offset + 3
+      }
+      // allow fall through if the above fails, we may end up checking a few
+      // bytes a second time. But that case will be VERY rare
+      this._state = 2;
+      /* falls through */
+    case 2:
+      // Look for start codes in the data from the current offset forward
+      start = offset;
+      end = start + length;
+      for (t = end - 3; offset < t;) {
+        if (data[offset + 2] > 1) {
+          // if data[offset + 2] is greater than 1, there is no way a start
+          // code can begin before offset + 3
+          offset += 3;
+        } else if (data[offset + 1] !== 0) {
+            offset += 2;
+        } else if (data[offset] !== 0) {
+            offset += 1;
+        } else {
+          // If we get here we have 00 00 00 or 00 00 01
+          if (data[offset + 2] === 1) {
+            if (offset > start) {
+              this._h264Frame.writeBytes(data, start, offset - start);
+            }
+            this._state = 3;
             offset += 3;
-          } else if (data[offset + 1] !== 0) {
-              offset += 2;
-          } else if (data[offset] !== 0) {
-              offset += 1;
-          } else {
-            // If we get here we have 00 00 00 or 00 00 01
-            if (data[offset + 2] === 1) {
-              if (offset > start) {
-                h264Frame.writeBytes(data, start, offset - start);
-              }
-              state = 3;
-              offset += 3;
-              return this.writeBytes(data, offset, end - offset);
-            }
-
-            if (end - offset >= 4 &&
-                data[offset + 2] === 0 &&
-                data[offset + 3] === 1) {
-              if (offset > start) {
-                h264Frame.writeBytes(data, start, offset - start);
-              }
-              state = 3;
-              offset += 4;
-              return this.writeBytes(data, offset, end - offset);
-            }
-
-            // We are at the end of the buffer, or we have 3 NULLS followed by
-            // something that is not a 1, either way we can step forward by at
-            // least 3
-            offset += 3;
+            return this.writeBytes(data, offset, end - offset);
           }
-        }
 
-        // We did not find any start codes. Try again next packet
-        state = 1;
-        if (h264Frame) {
-          h264Frame.writeBytes(data, start, length);
-        }
-        return;
-      case 3:
-        // The next byte is the first byte of a NAL Unit
-
-        if (h264Frame) {
-          // we've come to a new NAL unit so finish up the one we've been
-          // working on
-
-          switch (nalUnitType) {
-          case NALUnitType.seq_parameter_set_rbsp:
-            h264Frame.endNalUnit(newExtraData.sps);
-            break;
-          case NALUnitType.pic_parameter_set_rbsp:
-            h264Frame.endNalUnit(newExtraData.pps);
-            break;
-          case NALUnitType.slice_layer_without_partitioning_rbsp_idr:
-            h264Frame.endNalUnit();
-            break;
-          default:
-            h264Frame.endNalUnit();
-            break;
-          }
-        }
-
-        // setup to begin processing the new NAL unit
-        nalUnitType = data[offset] & 0x1F;
-        if (h264Frame) {
-            if (nalUnitType === NALUnitType.access_unit_delimiter_rbsp) {
-              // starting a new access unit, flush the previous one
-              this.finishFrame();
-            } else if (nalUnitType === NALUnitType.slice_layer_without_partitioning_rbsp_idr) {
-              h264Frame.keyFrame = true;
+          if (end - offset >= 4 &&
+              data[offset + 2] === 0 &&
+              data[offset + 3] === 1) {
+            if (offset > start) {
+              this._h264Frame.writeBytes(data, start, offset - start);
             }
-        }
+            this._state = 3;
+            offset += 4;
+            return this.writeBytes(data, offset, end - offset);
+          }
 
-        // finishFrame may render h264Frame null, so we must test again
-        if (!h264Frame) {
-          h264Frame = new FlvTag(FlvTag.VIDEO_TAG);
-          h264Frame.pts = next_pts;
-          h264Frame.dts = next_dts;
+          // We are at the end of the buffer, or we have 3 NULLS followed by
+          // something that is not a 1, either way we can step forward by at
+          // least 3
+          offset += 3;
         }
+      }
 
-        h264Frame.startNalUnit();
-        // We know there will not be an overlapping start code, so we can skip
-        // that test
-        state = 2;
-        return this.writeBytes(data, offset, length);
-      } // switch
-    };
+      // We did not find any start codes. Try again next packet
+      this._state = 1;
+      if (this._h264Frame) {
+        this._h264Frame.writeBytes(data, start, length);
+      }
+      return;
+    case 3:
+      // The next byte is the first byte of a NAL Unit
+
+      if (this._h264Frame) {
+        // we've come to a new NAL unit so finish up the one we've been
+        // working on
+
+        switch (this._nalUnitType) {
+        case NALUnitType.seq_parameter_set_rbsp:
+          this._h264Frame.endNalUnit(this._newExtraData.sps);
+          break;
+        case NALUnitType.pic_parameter_set_rbsp:
+          this._h264Frame.endNalUnit(this._newExtraData.pps);
+          break;
+        case NALUnitType.slice_layer_without_partitioning_rbsp_idr:
+          this._h264Frame.endNalUnit();
+          break;
+        default:
+          this._h264Frame.endNalUnit();
+          break;
+        }
+      }
+
+      // setup to begin processing the new NAL unit
+      this._nalUnitType = data[offset] & 0x1F;
+      if (this._h264Frame) {
+          if (this._nalUnitType === NALUnitType.access_unit_delimiter_rbsp) {
+            // starting a new access unit, flush the previous one
+            this.finishFrame();
+          } else if (this._nalUnitType === NALUnitType.slice_layer_without_partitioning_rbsp_idr) {
+            this._h264Frame.keyFrame = true;
+          }
+      }
+
+      // finishFrame may render this._h264Frame null, so we must test again
+      if (!this._h264Frame) {
+        this._h264Frame = new FlvTag(FlvTag.VIDEO_TAG);
+        this._h264Frame.pts = this._next_pts;
+        this._h264Frame.dts = this._next_dts;
+      }
+
+      this._h264Frame.startNalUnit();
+      // We know there will not be an overlapping start code, so we can skip
+      // that test
+      this._state = 2;
+      return this.writeBytes(data, offset, length);
+    } // switch
   };
 })(this);
 
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],10:[function(require,module,exports){
+},{"video.js":undefined}],11:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -1758,6 +1886,9 @@ hls.FlvTag.frameTime = function(tag) {
    */
   ParseStream.prototype.push = function(line) {
     var match, event;
+
+    //strip whitespace
+    line = line.replace(/^\s+|\s+$/g, '');
     if (line.length === 0) {
       // ignore empty lines
       return;
@@ -1850,6 +1981,18 @@ hls.FlvTag.frameTime = function(tag) {
       event = {
         type: 'tag',
         tagType: 'media-sequence'
+      };
+      if (match[1]) {
+        event.number = parseInt(match[1], 10);
+      }
+      this.trigger('data', event);
+      return;
+    }
+    match = (/^#EXT-X-DISCONTINUITY-SEQUENCE:?(\-?[0-9.]*)?/).exec(line);
+    if (match) {
+      event = {
+        type: 'tag',
+        tagType: 'discontinuity-sequence'
       };
       if (match[1]) {
         event.number = parseInt(match[1], 10);
@@ -1955,7 +2098,7 @@ hls.FlvTag.frameTime = function(tag) {
         event.attributes = parseAttributes(match[1]);
         // parse the IV string into a Uint32Array
         if (event.attributes.IV) {
-          if (event.attributes.IV.substring(0,2) === '0x') {	
+          if (event.attributes.IV.substring(0,2) === '0x') {
             event.attributes.IV = event.attributes.IV.substring(2);
           }
 
@@ -2010,7 +2153,8 @@ hls.FlvTag.frameTime = function(tag) {
 
     // the manifest is empty until the parse stream begins delivering data
     this.manifest = {
-      allowCache: true
+      allowCache: true,
+      discontinuityStarts: []
     };
 
     // update the manifest with the m3u8 entry from the parse stream
@@ -2054,6 +2198,12 @@ hls.FlvTag.frameTime = function(tag) {
                 this.manifest.mediaSequence = 0;
                 this.trigger('info', {
                   message: 'defaulting media sequence to zero'
+                });
+              }
+              if (!('discontinuitySequence' in this.manifest)) {
+                this.manifest.discontinuitySequence = 0;
+                this.trigger('info', {
+                  message: 'defaulting discontinuity sequence to zero'
                 });
               }
               if (entry.duration >= 0) {
@@ -2106,6 +2256,15 @@ hls.FlvTag.frameTime = function(tag) {
               }
               this.manifest.mediaSequence = entry.number;
             },
+            'discontinuity-sequence': function() {
+              if (!isFinite(entry.number)) {
+                this.trigger('warn', {
+                  message: 'ignoring invalid discontinuity sequence: ' + entry.number
+                });
+                return;
+              }
+              this.manifest.discontinuitySequence = entry.number;
+            },
             'playlist-type': function() {
               if (!(/VOD|EVENT/).test(entry.playlistType)) {
                 this.trigger('warn', {
@@ -2133,6 +2292,7 @@ hls.FlvTag.frameTime = function(tag) {
             },
             'discontinuity': function() {
               currentUri.discontinuity = true;
+              this.manifest.discontinuityStarts.push(uris.length);
             },
             'targetduration': function() {
               if (!isFinite(entry.duration) || entry.duration < 0) {
@@ -2208,7 +2368,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],11:[function(require,module,exports){
+},{"video.js":undefined}],12:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -2221,12 +2381,24 @@ hls.FlvTag.frameTime = function(tag) {
 (function(window, videojs, undefined) {
   'use strict';
   var
-    parseString = function(bytes, start, end) {
+    // return a percent-encoded representation of the specified byte range
+    // @see http://en.wikipedia.org/wiki/Percent-encoding
+    percentEncode = function(bytes, start, end) {
       var i, result = '';
       for (i = start; i < end; i++) {
         result += '%' + ('00' + bytes[i].toString(16)).slice(-2);
       }
-      return window.decodeURIComponent(result);
+      return result;
+    },
+    // return the string representation of the specified byte range,
+    // interpreted as UTf-8.
+    parseUtf8 = function(bytes, start, end) {
+      return window.decodeURIComponent(percentEncode(bytes, start, end));
+    },
+    // return the string representation of the specified byte range,
+    // interpreted as ISO-8859-1.
+    parseIso88591 = function(bytes, start, end) {
+      return window.unescape(percentEncode(bytes, start, end));
     },
     tagParsers = {
       'TXXX': function(tag) {
@@ -2239,8 +2411,9 @@ hls.FlvTag.frameTime = function(tag) {
         for (i = 1; i < tag.data.length; i++) {
           if (tag.data[i] === 0) {
             // parse the text fields
-            tag.description = parseString(tag.data, 1, i);
-            tag.value = parseString(tag.data, i + 1, tag.data.length);
+            tag.description = parseUtf8(tag.data, 1, i);
+            // do not include the null terminator in the tag value
+            tag.value = parseUtf8(tag.data, i + 1, tag.data.length - 1);
             break;
           }
         }
@@ -2255,24 +2428,45 @@ hls.FlvTag.frameTime = function(tag) {
         for (i = 1; i < tag.data.length; i++) {
           if (tag.data[i] === 0) {
             // parse the description and URL fields
-            tag.description = parseString(tag.data, 1, i);
-            tag.url = parseString(tag.data, i + 1, tag.data.length);
+            tag.description = parseUtf8(tag.data, 1, i);
+            tag.url = parseUtf8(tag.data, i + 1, tag.data.length);
             break;
           }
         }
+      },
+      'PRIV': function(tag) {
+        var i;
+
+        for (i = 0; i < tag.data.length; i++) {
+          if (tag.data[i] === 0) {
+            // parse the description and URL fields
+            tag.owner = parseIso88591(tag.data, 0, i);
+            break;
+          }
+        }
+        tag.privateData = tag.data.subarray(i + 1);
       }
     },
     MetadataStream;
 
   MetadataStream = function(options) {
-    var settings = {
-      debug: !!(options && options.debug),
+    var
+      settings = {
+        debug: !!(options && options.debug),
 
-      // the bytes of the program-level descriptor field in MP2T
-      // see ISO/IEC 13818-1:2013 (E), section 2.6 "Program and
-      // program element descriptors"
-      descriptor: options && options.descriptor
-    }, i;
+        // the bytes of the program-level descriptor field in MP2T
+        // see ISO/IEC 13818-1:2013 (E), section 2.6 "Program and
+        // program element descriptors"
+        descriptor: options && options.descriptor
+      },
+      // the total size in bytes of the ID3 tag being parsed
+      tagSize = 0,
+      // tag data that is not complete enough to be parsed
+      buffer = [],
+      // the total number of bytes currently in the buffer
+      bufferSize = 0,
+      i;
+
     MetadataStream.prototype.init.call(this);
 
     // calculate the text track in-band metadata track dispatch type
@@ -2285,73 +2479,104 @@ hls.FlvTag.frameTime = function(tag) {
     }
 
     this.push = function(chunk) {
-      var tagSize, frameStart, frameSize, frame;
+      var tag, frameStart, frameSize, frame, i;
 
       // ignore events that don't look like ID3 data
-      if (chunk.data.length < 10 ||
-          chunk.data[0] !== 'I'.charCodeAt(0) ||
-          chunk.data[1] !== 'D'.charCodeAt(0) ||
-          chunk.data[2] !== '3'.charCodeAt(0)) {
+      if (buffer.length === 0 &&
+          (chunk.data.length < 10 ||
+           chunk.data[0] !== 'I'.charCodeAt(0) ||
+           chunk.data[1] !== 'D'.charCodeAt(0) ||
+           chunk.data[2] !== '3'.charCodeAt(0))) {
         if (settings.debug) {
-          videojs.log('Skipping unrecognized metadata stream');
+          videojs.log('Skipping unrecognized metadata packet');
         }
         return;
       }
 
-      // find the start of the first frame and the end of the tag
-      tagSize = chunk.data.byteLength;
-      frameStart = 10;
-      if (chunk.data[5] & 0x40) {
-        // advance the frame start past the extended header
-        frameStart += 4; // header size field
-        frameStart += (chunk.data[10] << 24) |
-                      (chunk.data[11] << 16) |
-                      (chunk.data[12] << 8)  |
-                      (chunk.data[13]);
+      // add this chunk to the data we've collected so far
+      buffer.push(chunk);
+      bufferSize += chunk.data.byteLength;
 
-        // clip any padding off the end
-        tagSize -= (chunk.data[16] << 24) |
-                   (chunk.data[17] << 16) |
-                   (chunk.data[18] << 8)  |
-                   (chunk.data[19]);
+      // grab the size of the entire frame from the ID3 header
+      if (buffer.length === 1) {
+        // the frame size is transmitted as a 28-bit integer in the
+        // last four bytes of the ID3 header.
+        // The most significant bit of each byte is dropped and the
+        // results concatenated to recover the actual value.
+        tagSize = (chunk.data[6] << 21) |
+                  (chunk.data[7] << 14) |
+                  (chunk.data[8] << 7) |
+                  (chunk.data[9]);
+
+        // ID3 reports the tag size excluding the header but it's more
+        // convenient for our comparisons to include it
+        tagSize += 10;
       }
 
-      // adjust the PTS values to align with the video and audio
-      // streams
-      if (this.timestampOffset) {
-        chunk.pts -= this.timestampOffset;
-        chunk.dts -= this.timestampOffset;
+      // if the entire frame has not arrived, wait for more data
+      if (bufferSize < tagSize) {
+        return;
+      }
+
+      // collect the entire frame so it can be parsed
+      tag = {
+        data: new Uint8Array(tagSize),
+        frames: [],
+        pts: buffer[0].pts,
+        dts: buffer[0].dts
+      };
+      for (i = 0; i < tagSize;) {
+        tag.data.set(buffer[0].data, i);
+        i += buffer[0].data.byteLength;
+        bufferSize -= buffer[0].data.byteLength;
+        buffer.shift();
+      }
+
+      // find the start of the first frame and the end of the tag
+      frameStart = 10;
+      if (tag.data[5] & 0x40) {
+        // advance the frame start past the extended header
+        frameStart += 4; // header size field
+        frameStart += (tag.data[10] << 24) |
+                      (tag.data[11] << 16) |
+                      (tag.data[12] << 8)  |
+                      (tag.data[13]);
+
+        // clip any padding off the end
+        tagSize -= (tag.data[16] << 24) |
+                   (tag.data[17] << 16) |
+                   (tag.data[18] << 8)  |
+                   (tag.data[19]);
       }
 
       // parse one or more ID3 frames
       // http://id3.org/id3v2.3.0#ID3v2_frame_overview
-      chunk.frames = [];
       do {
         // determine the number of bytes in this frame
-        frameSize = (chunk.data[frameStart + 4] << 24) |
-                    (chunk.data[frameStart + 5] << 16) |
-                    (chunk.data[frameStart + 6] <<  8) |
-                    (chunk.data[frameStart + 7]);
+        frameSize = (tag.data[frameStart + 4] << 24) |
+                    (tag.data[frameStart + 5] << 16) |
+                    (tag.data[frameStart + 6] <<  8) |
+                    (tag.data[frameStart + 7]);
         if (frameSize < 1) {
           return videojs.log('Malformed ID3 frame encountered. Skipping metadata parsing.');
         }
 
         frame = {
-          id: String.fromCharCode(chunk.data[frameStart]) +
-            String.fromCharCode(chunk.data[frameStart + 1]) +
-            String.fromCharCode(chunk.data[frameStart + 2]) +
-            String.fromCharCode(chunk.data[frameStart + 3]),
-          data: chunk.data.subarray(frameStart + 10, frameStart + frameSize + 10)
+          id: String.fromCharCode(tag.data[frameStart],
+                                  tag.data[frameStart + 1],
+                                  tag.data[frameStart + 2],
+                                  tag.data[frameStart + 3]),
+          data: tag.data.subarray(frameStart + 10, frameStart + frameSize + 10)
         };
         if (tagParsers[frame.id]) {
           tagParsers[frame.id](frame);
         }
-        chunk.frames.push(frame);
+        tag.frames.push(frame);
 
         frameStart += 10; // advance past the frame header
         frameStart += frameSize; // advance past the frame body
       } while (frameStart < tagSize);
-      this.trigger('data', chunk);
+      this.trigger('data', tag);
     };
   };
   MetadataStream.prototype = new videojs.Hls.Stream();
@@ -2362,20 +2587,32 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],12:[function(require,module,exports){
+},{"video.js":undefined}],13:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A state machine that manages the loading, caching, and updating of
- * M3U8 playlists.
+ * M3U8 playlists. When tracking a live playlist, loaders will keep
+ * track of the duration of content that expired since the loader was
+ * initialized and when the current discontinuity sequence was
+ * encountered. A complete media timeline for a live playlist with
+ * expiring segments and discontinuities looks like this:
+ *
+ * |-- expiredPreDiscontinuity --|-- expiredPostDiscontinuity --|-- segments --|
+ *
+ * You can use these values to calculate how much time has elapsed
+ * since the stream began loading or how long it has been since the
+ * most recent discontinuity was encountered, for instance.
  */
 (function(window, videojs) {
   'use strict';
   var
     resolveUrl = videojs.Hls.resolveUrl,
     xhr = videojs.Hls.xhr,
+    Playlist = videojs.Hls.Playlist,
+    mergeOptions = videojs.util.mergeOptions,
 
     /**
      * Returns a new master playlist that is the result of merging an
@@ -2391,7 +2628,7 @@ hls.FlvTag.frameTime = function(tag) {
     updateMaster = function(master, media) {
       var
         changed = false,
-        result = videojs.util.mergeOptions(master, {}),
+        result = mergeOptions(master, {}),
         i,
         playlist;
 
@@ -2408,68 +2645,54 @@ hls.FlvTag.frameTime = function(tag) {
             continue;
           }
 
-          result.playlists[i] = videojs.util.mergeOptions(playlist, media);
+          result.playlists[i] = mergeOptions(playlist, media);
           result.playlists[media.uri] = result.playlists[i];
+
+          // if the update could overlap existing segment information,
+          // merge the two lists
+          if (playlist.segments) {
+            result.playlists[i].segments = updateSegments(playlist.segments,
+                                                          media.segments,
+                                                          media.mediaSequence - playlist.mediaSequence);
+          }
           changed = true;
         }
       }
       return changed ? result : null;
     },
 
+    /**
+     * Returns a new array of segments that is the result of merging
+     * properties from an older list of segments onto an updated
+     * list. No properties on the updated playlist will be overridden.
+     * @param original {array} the outdated list of segments
+     * @param update {array} the updated list of segments
+     * @param offset {number} (optional) the index of the first update
+     * segment in the original segment list. For non-live playlists,
+     * this should always be zero and does not need to be
+     * specified. For live playlists, it should be the difference
+     * between the media sequence numbers in the original and updated
+     * playlists.
+     * @return a list of merged segment objects
+     */
+    updateSegments = function(original, update, offset) {
+      var result = update.slice(), length, i;
+      offset = offset || 0;
+      length = Math.min(original.length, update.length + offset);
+
+      for (i = offset; i < length; i++) {
+        result[i - offset] = mergeOptions(original[i], result[i - offset]);
+      }
+      return result;
+    },
+
     PlaylistLoader = function(srcUrl, withCredentials) {
       var
         loader = this,
         dispose,
-        media,
         mediaUpdateTimeout,
         request,
-
-        haveMetadata = function(error, xhr, url) {
-          var parser, refreshDelay, update;
-
-          loader.setBandwidth(request || xhr);
-
-          // any in-flight request is now finished
-          request = null;
-
-          if (error) {
-            loader.error = {
-              status: xhr.status,
-              message: 'HLS playlist request error at URL: ' + url,
-              responseText: xhr.responseText,
-              code: (xhr.status >= 500) ? 4 : 2
-            };
-            return loader.trigger('error');
-          }
-
-          loader.state = 'HAVE_METADATA';
-
-          parser = new videojs.m3u8.Parser();
-          parser.push(xhr.responseText);
-          parser.end();
-          parser.manifest.uri = url;
-
-          // merge this playlist into the master
-          update = updateMaster(loader.master, parser.manifest);
-          refreshDelay = (parser.manifest.targetDuration || 10) * 1000;
-          if (update) {
-            loader.master = update;
-            media = loader.master.playlists[url];
-          } else {
-            // if the playlist is unchanged since the last reload,
-            // try again after half the target duration
-            refreshDelay /= 2;
-          }
-
-          // refresh live playlists after a target duration passes
-          if (!loader.media().endList) {
-            mediaUpdateTimeout = window.setTimeout(function() {
-              loader.trigger('mediaupdatetimeout');
-            }, refreshDelay);
-          }
-
-          loader.trigger('loadedplaylist');
-        };
+        haveMetadata;
 
       PlaylistLoader.prototype.init.call(this);
 
@@ -2477,7 +2700,73 @@ hls.FlvTag.frameTime = function(tag) {
         throw new Error('A non-empty playlist URL is required');
       }
 
+      // update the playlist loader's state in response to a new or
+      // updated playlist.
+      haveMetadata = function(error, xhr, url) {
+        var parser, refreshDelay, update;
+
+        loader.setBandwidth(request || xhr);
+
+        // any in-flight request is now finished
+        request = null;
+
+        if (error) {
+          loader.error = {
+            status: xhr.status,
+            message: 'HLS playlist request error at URL: ' + url,
+            responseText: xhr.responseText,
+            code: (xhr.status >= 500) ? 4 : 2
+          };
+          return loader.trigger('error');
+        }
+
+        loader.state = 'HAVE_METADATA';
+
+        parser = new videojs.m3u8.Parser();
+        parser.push(xhr.responseText);
+        parser.end();
+        parser.manifest.uri = url;
+
+        // merge this playlist into the master
+        update = updateMaster(loader.master, parser.manifest);
+        refreshDelay = (parser.manifest.targetDuration || 10) * 1000;
+        if (update) {
+          loader.master = update;
+          loader.updateMediaPlaylist_(parser.manifest);
+        } else {
+          // if the playlist is unchanged since the last reload,
+          // try again after half the target duration
+          refreshDelay /= 2;
+        }
+
+        // refresh live playlists after a target duration passes
+        if (!loader.media().endList) {
+          window.clearTimeout(mediaUpdateTimeout);
+          mediaUpdateTimeout = window.setTimeout(function() {
+            loader.trigger('mediaupdatetimeout');
+          }, refreshDelay);
+        }
+
+        loader.trigger('loadedplaylist');
+      };
+
+      // initialize the loader state
       loader.state = 'HAVE_NOTHING';
+
+      // the total duration of all segments that expired and have been
+      // removed from the current playlist after the last
+      // #EXT-X-DISCONTINUITY. In a live playlist without
+      // discontinuities, this is the total amount of time that has
+      // been removed from the stream since the playlist loader began
+      // tracking it.
+      loader.expiredPostDiscontinuity_ = 0;
+
+      // the total duration of all segments that expired and have been
+      // removed from the current playlist before the last
+      // #EXT-X-DISCONTINUITY. The total amount of time that has
+      // expired is always the sum of expiredPreDiscontinuity_ and
+      // expiredPostDiscontinuity_.
+      loader.expiredPreDiscontinuity_ = 0;
 
       // capture the prototype dispose function
       dispose = this.dispose;
@@ -2509,7 +2798,7 @@ hls.FlvTag.frameTime = function(tag) {
         var mediaChange = false;
         // getter
         if (!playlist) {
-          return media;
+          return loader.media_;
         }
 
         // setter
@@ -2526,7 +2815,7 @@ hls.FlvTag.frameTime = function(tag) {
           playlist = loader.master.playlists[playlist];
         }
 
-        mediaChange = playlist.uri !== media.uri;
+        mediaChange = playlist.uri !== loader.media_.uri;
 
         // switch to fully loaded playlists immediately
         if (loader.master.playlists[playlist.uri].endList) {
@@ -2537,7 +2826,7 @@ hls.FlvTag.frameTime = function(tag) {
             request = null;
           }
           loader.state = 'HAVE_METADATA';
-          media = playlist;
+          loader.media_ = playlist;
 
           // trigger media change if the active media has been updated
           if (mediaChange) {
@@ -2660,13 +2949,404 @@ hls.FlvTag.frameTime = function(tag) {
     };
   PlaylistLoader.prototype = new videojs.Hls.Stream();
 
+  /**
+   * Update the PlaylistLoader state to reflect the changes in an
+   * update to the current media playlist.
+   * @param update {object} the updated media playlist object
+   */
+  PlaylistLoader.prototype.updateMediaPlaylist_ = function(update) {
+    var lastDiscontinuity, expiredCount, i;
+
+    if (this.media_) {
+      expiredCount = update.mediaSequence - this.media_.mediaSequence;
+
+      // setup the index for duration calculations so that the newly
+      // expired time will be accumulated after the last
+      // discontinuity, unless we discover otherwise
+      lastDiscontinuity = this.media_.mediaSequence;
+
+      if (this.media_.discontinuitySequence !== update.discontinuitySequence) {
+        i = expiredCount;
+        while (i--) {
+          if (this.media_.segments[i].discontinuity) {
+            // a segment that begins a new discontinuity sequence has expired
+            lastDiscontinuity = i + this.media_.mediaSequence;
+            this.expiredPreDiscontinuity_ += this.expiredPostDiscontinuity_;
+            this.expiredPostDiscontinuity_ = 0;
+            break;
+          }
+        }
+      }
+
+      // update the expirated durations
+      this.expiredPreDiscontinuity_ += Playlist.duration(this.media_,
+                                                         this.media_.mediaSequence,
+                                                         lastDiscontinuity);
+      this.expiredPostDiscontinuity_ += Playlist.duration(this.media_,
+                                                          lastDiscontinuity,
+                                                          update.mediaSequence);
+    }
+
+    this.media_ = this.master.playlists[update.uri];
+  };
+
+  /**
+   * Determine the index of the segment that contains a specified
+   * playback position in the current media playlist. Early versions
+   * of the HLS specification require segment durations to be rounded
+   * to the nearest integer which means it may not be possible to
+   * determine the correct segment for a playback position if that
+   * position is within .5 seconds of the segment duration. This
+   * function will always return the lower of the two possible indices
+   * in those cases.
+   *
+   * @param time {number} The number of seconds since the earliest
+   * possible position to determine the containing segment for
+   * @returns {number} The number of the media segment that contains
+   * that time position. If the specified playback position is outside
+   * the time range of the current set of media segments, the return
+   * value will be clamped to the index of the segment containing the
+   * closest playback position that is currently available.
+   */
+  PlaylistLoader.prototype.getMediaIndexForTime_ = function(time) {
+    var i;
+
+    if (!this.media_) {
+      return 0;
+    }
+
+    // when the requested position is earlier than the current set of
+    // segments, return the earliest segment index
+    time -= this.expiredPreDiscontinuity_ + this.expiredPostDiscontinuity_;
+    if (time < 0) {
+      return 0;
+    }
+
+    for (i = 0; i < this.media_.segments.length; i++) {
+      time -= Playlist.duration(this.media_,
+                                this.media_.mediaSequence + i,
+                                this.media_.mediaSequence + i + 1,
+                                false);
+
+      // HLS version 3 and lower round segment durations to the
+      // nearest decimal integer. When the correct media index is
+      // ambiguous, prefer the higher one.
+      if (time <= 0) {
+        return i;
+      }
+    }
+
+    // the playback position is outside the range of available
+    // segments so return the last one
+    return this.media_.segments.length - 1;
+  };
+
   videojs.Hls.PlaylistLoader = PlaylistLoader;
 })(window, window.videojs);
 
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],13:[function(require,module,exports){
+},{"video.js":undefined}],14:[function(require,module,exports){
+/**
+ * Playlist related utilities.
+ */
+(function(window, videojs) {
+  'use strict';
+
+  var DEFAULT_TARGET_DURATION = 10;
+  var accumulateDuration, ascendingNumeric, duration, intervalDuration, optionalMin, optionalMax, rangeDuration, seekable;
+
+  // Math.min that will return the alternative input if one of its
+  // parameters in undefined
+  optionalMin = function(left, right) {
+    left = isFinite(left) ? left : Infinity;
+    right = isFinite(right) ? right : Infinity;
+    return Math.min(left, right);
+  };
+
+  // Math.max that will return the alternative input if one of its
+  // parameters in undefined
+  optionalMax = function(left, right) {
+    left = isFinite(left) ? left: -Infinity;
+    right = isFinite(right) ? right: -Infinity;
+    return Math.max(left, right);
+  };
+
+  // Array.sort comparator to sort numbers in ascending order
+  ascendingNumeric = function(left, right) {
+    return left - right;
+  };
+
+  /**
+   * Returns the media duration for the segments between a start and
+   * exclusive end index. The start and end parameters are interpreted
+   * as indices into the currently available segments. This method
+   * does not calculate durations for segments that have expired.
+   * @param playlist {object} a media playlist object
+   * @param start {number} an inclusive lower boundary for the
+   * segments to examine.
+   * @param end {number} an exclusive upper boundary for the segments
+   * to examine.
+   * @param includeTrailingTime {boolean} if false, the interval between
+   * the final segment and the subsequent segment will not be included
+   * in the result
+   * @return {number} the duration between the start index and end
+   * index in seconds.
+   */
+  accumulateDuration = function(playlist, start, end, includeTrailingTime) {
+    var
+      ranges = [],
+      rangeEnds = (playlist.discontinuityStarts || []).concat(end),
+      result = 0,
+      i;
+
+    // short circuit if start and end don't specify a non-empty range
+    // of segments
+    if (start >= end) {
+      return 0;
+    }
+
+    // create a range object for each discontinuity sequence
+    rangeEnds.sort(ascendingNumeric);
+    for (i = 0; i < rangeEnds.length; i++) {
+      if (rangeEnds[i] > start) {
+        ranges.push({ start: start, end: rangeEnds[i] });
+        i++;
+        break;
+      }
+    }
+    for (; i < rangeEnds.length; i++) {
+      // ignore times ranges later than end
+      if (rangeEnds[i] >= end) {
+        ranges.push({ start: rangeEnds[i - 1], end: end });
+        break;
+      }
+      ranges.push({ start: ranges[ranges.length - 1].end, end: rangeEnds[i] });
+    }
+
+    // add up the durations for each of the ranges
+    for (i = 0; i < ranges.length; i++) {
+      result += rangeDuration(playlist,
+                              ranges[i],
+                              i === ranges.length - 1 && includeTrailingTime);
+    }
+
+    return result;
+  };
+
+  /**
+   * Returns the duration of the specified range of segments. The
+   * range *must not* cross a discontinuity.
+   * @param playlist {object} a media playlist object
+   * @param range {object} an object that specifies a starting and
+   * ending index into the available segments.
+   * @param includeTrailingTime {boolean} if false, the interval between
+   * the final segment and the subsequent segment will not be included
+   * in the result
+   * @return {number} the duration of the range in seconds.
+   */
+  rangeDuration = function(playlist, range, includeTrailingTime) {
+    var
+      result = 0,
+      targetDuration = playlist.targetDuration || DEFAULT_TARGET_DURATION,
+      segment,
+      left, right;
+
+    // accumulate while searching for the earliest segment with
+    // available PTS information
+    for (left = range.start; left < range.end; left++) {
+      segment = playlist.segments[left];
+      if (segment.minVideoPts !== undefined ||
+          segment.minAudioPts !== undefined) {
+        break;
+      }
+      result += segment.duration || targetDuration;
+    }
+
+    // see if there's enough information to include the trailing time
+    if (includeTrailingTime) {
+      segment = playlist.segments[range.end];
+      if (segment &&
+          (segment.minVideoPts !== undefined ||
+           segment.minAudioPts !== undefined)) {
+        result += 0.001 *
+          (optionalMin(segment.minVideoPts, segment.minAudioPts) -
+           optionalMin(playlist.segments[left].minVideoPts,
+                    playlist.segments[left].minAudioPts));
+        return result;
+      }
+    }
+
+    // do the same thing while finding the latest segment
+    for (right = range.end - 1; right >= left; right--) {
+      segment = playlist.segments[right];
+      if (segment.maxVideoPts !== undefined ||
+          segment.maxAudioPts !== undefined) {
+        break;
+      }
+      result += segment.duration || targetDuration;
+    }
+
+    // add in the PTS interval in seconds between them
+    if (right >= left) {
+      result += 0.001 *
+        (optionalMax(playlist.segments[right].maxVideoPts,
+                  playlist.segments[right].maxAudioPts) -
+         optionalMin(playlist.segments[left].minVideoPts,
+                  playlist.segments[left].minAudioPts));
+    }
+
+    return result;
+  };
+
+  /**
+   * Calculate the media duration from the segments associated with a
+   * playlist. The duration of a subinterval of the available segments
+   * may be calculated by specifying a start and end index.
+   *
+   * @param playlist {object} a media playlist object
+   * @param startSequence {number} (optional) an inclusive lower
+   * boundary for the playlist.  Defaults to 0.
+   * @param endSequence {number} (optional) an exclusive upper boundary
+   * for the playlist.  Defaults to playlist length.
+   * @param includeTrailingTime {boolean} if false, the interval between
+   * the final segment and the subsequent segment will not be included
+   * in the result
+   * @return {number} the duration between the start index and end
+   * index.
+   */
+  intervalDuration = function(playlist, startSequence, endSequence, includeTrailingTime) {
+    var result = 0, targetDuration, expiredSegmentCount;
+
+    if (startSequence === undefined) {
+      startSequence = playlist.mediaSequence || 0;
+    }
+    if (endSequence === undefined) {
+      endSequence = startSequence + (playlist.segments || []).length;
+    }
+    targetDuration = playlist.targetDuration || DEFAULT_TARGET_DURATION;
+
+    // estimate expired segment duration using the target duration
+    expiredSegmentCount = optionalMax(playlist.mediaSequence - startSequence, 0);
+    result += expiredSegmentCount * targetDuration;
+
+    // accumulate the segment durations into the result
+    result += accumulateDuration(playlist,
+                                 startSequence + expiredSegmentCount - playlist.mediaSequence,
+                                 endSequence - playlist.mediaSequence,
+                                 includeTrailingTime);
+
+    return result;
+  };
+
+  /**
+   * Calculates the duration of a playlist. If a start and end index
+   * are specified, the duration will be for the subset of the media
+   * timeline between those two indices. The total duration for live
+   * playlists is always Infinity.
+   * @param playlist {object} a media playlist object
+   * @param startSequence {number} (optional) an inclusive lower
+   * boundary for the playlist.  Defaults to 0.
+   * @param endSequence {number} (optional) an exclusive upper boundary
+   * for the playlist.  Defaults to playlist length.
+   * @param includeTrailingTime {boolean} (optional) if false, the interval between
+   * the final segment and the subsequent segment will not be included
+   * in the result
+   * @return {number} the duration between the start index and end
+   * index.
+   */
+  duration = function(playlist, startSequence, endSequence, includeTrailingTime) {
+    if (!playlist) {
+      return 0;
+    }
+
+    if (includeTrailingTime === undefined) {
+      includeTrailingTime = true;
+    }
+
+    // if a slice of the total duration is not requested, use
+    // playlist-level duration indicators when they're present
+    if (startSequence === undefined && endSequence === undefined) {
+      // if present, use the duration specified in the playlist
+      if (playlist.totalDuration) {
+        return playlist.totalDuration;
+      }
+
+      // duration should be Infinity for live playlists
+      if (!playlist.endList) {
+        return window.Infinity;
+      }
+    }
+
+    // calculate the total duration based on the segment durations
+    return intervalDuration(playlist,
+                            startSequence,
+                            endSequence,
+                            includeTrailingTime);
+  };
+
+  /**
+   * Calculates the interval of time that is currently seekable in a
+   * playlist. The returned time ranges are relative to the earliest
+   * moment in the specified playlist that is still available. A full
+   * seekable implementation for live streams would need to offset
+   * these values by the duration of content that has expired from the
+   * stream.
+   * @param playlist {object} a media playlist object
+   * @return {TimeRanges} the periods of time that are valid targets
+   * for seeking
+   */
+  seekable = function(playlist) {
+    var start, end, liveBuffer, targetDuration, segment, pending, i;
+
+    // without segments, there are no seekable ranges
+    if (!playlist.segments) {
+      return videojs.createTimeRange();
+    }
+    // when the playlist is complete, the entire duration is seekable
+    if (playlist.endList) {
+      return videojs.createTimeRange(0, duration(playlist));
+    }
+
+    start = 0;
+    end = intervalDuration(playlist,
+                           playlist.mediaSequence,
+                           playlist.mediaSequence + playlist.segments.length);
+    targetDuration = playlist.targetDuration || DEFAULT_TARGET_DURATION;
+
+    // live playlists should not expose three segment durations worth
+    // of content from the end of the playlist
+    // https://tools.ietf.org/html/draft-pantos-http-live-streaming-16#section-6.3.3
+    if (!playlist.endList) {
+      liveBuffer = targetDuration * videojs.Hls.LIVE_SYNC_DURATION_COUNT;
+      // walk backward from the last available segment and track how
+      // much media time has elapsed until three target durations have
+      // been traversed. if a segment is part of the interval being
+      // reported, subtract the overlapping portion of its duration
+      // from the result.
+      for (i = playlist.segments.length - 1; i >= 0 && liveBuffer > 0; i--) {
+        segment = playlist.segments[i];
+        pending = optionalMin(duration(playlist,
+                                       playlist.mediaSequence + i,
+                                       playlist.mediaSequence + i + 1),
+                           liveBuffer);
+        liveBuffer -= pending;
+        end -= pending;
+      }
+    }
+
+    return videojs.createTimeRange(start, end);
+  };
+
+  // exports
+  videojs.Hls.Playlist = {
+    duration: duration,
+    seekable: seekable
+  };
+})(window, window.videojs);
+
+},{}],15:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -2692,10 +3372,7 @@ hls.FlvTag.frameTime = function(tag) {
       streamBuffer = new Uint8Array(MP2T_PACKET_LENGTH),
       streamBufferByteCount = 0,
       h264Stream = new H264Stream(),
-      aacStream = new AacStream(),
-      h264HasTimeStampOffset = false,
-      aacHasTimeStampOffset = false,
-      timeStampOffset;
+      aacStream = new AacStream();
 
     // expose the stream metadata
     self.stream = {
@@ -2718,7 +3395,8 @@ hls.FlvTag.frameTime = function(tag) {
         headBytes = new Uint8Array(3 + 1 + 1 + 4),
         head = new DataView(headBytes.buffer),
         metadata,
-        result;
+        result,
+        metadataLength;
 
       // default arguments
       duration = duration || 0;
@@ -2753,9 +3431,10 @@ hls.FlvTag.frameTime = function(tag) {
       metadata = new FlvTag(FlvTag.METADATA_TAG);
       metadata.pts = metadata.dts = 0;
       metadata.writeMetaDataDouble("duration", duration);
-      result = new Uint8Array(headBytes.byteLength + metadata.byteLength);
-      result.set(head);
-      result.set(head.bytesLength, metadata.finalize());
+      metadataLength = metadata.finalize().length;
+      result = new Uint8Array(headBytes.byteLength + metadataLength);
+      result.set(headBytes);
+      result.set(head.byteLength, metadataLength);
 
       return result;
     };
@@ -2889,6 +3568,9 @@ hls.FlvTag.frameTime = function(tag) {
         patTableId, // :int
         patCurrentNextIndicator, // Boolean
         patSectionLength, // :uint
+        programNumber, // :uint
+        programPid, // :uint
+        patEntriesEnd, // :uint
 
         pesPacketSize, // :int,
         dataAlignmentIndicator, // :Boolean,
@@ -2949,6 +3631,8 @@ hls.FlvTag.frameTime = function(tag) {
         if (patCurrentNextIndicator) {
           // section_length specifies the number of bytes following
           // its position to the end of this section
+          // section_length = rest of header + (n * entry length) + CRC
+          // = 5 + (n * 4) + 4
           patSectionLength =  (data[offset + 1] & 0x0F) << 8 | data[offset + 2];
           // move past the rest of the PSI header to the first program
           // map table entry
@@ -2956,15 +3640,22 @@ hls.FlvTag.frameTime = function(tag) {
 
           // we don't handle streams with more than one program, so
           // raise an exception if we encounter one
-          // section_length = rest of header + (n * entry length) + CRC
-          // = 5 + (n * 4) + 4
-          if ((patSectionLength - 5 - 4) / 4 !== 1) {
-            throw new Error("TS has more that 1 program");
+          patEntriesEnd = offset + (patSectionLength - 5 - 4);
+          for (; offset < patEntriesEnd; offset += 4) {
+            programNumber = (data[offset] << 8 | data[offset + 1]);
+            programPid = (data[offset + 2] & 0x1F) << 8 | data[offset + 3];
+            // network PID program number equals 0
+            // this is primarily an artifact of EBU DVB and can be ignored
+            if (programNumber === 0) {
+              self.stream.networkPid = programPid;
+            } else if (self.stream.pmtPid === undefined) {
+              // the Program Map Table (PMT) associates the underlying
+              // video and audio streams with a unique PID
+              self.stream.pmtPid = programPid;
+            } else if (self.stream.pmtPid !== programPid) {
+              throw new Error("TS has more that 1 program");
+            }
           }
-
-          // the Program Map Table (PMT) associates the underlying
-          // video and audio streams with a unique PID
-          self.stream.pmtPid = (data[offset + 2] & 0x1F) << 8 | data[offset + 3];
         }
       } else if (pid === self.stream.programMapTable[STREAM_TYPES.h264] ||
                  pid === self.stream.programMapTable[STREAM_TYPES.adts] ||
@@ -3013,40 +3704,14 @@ hls.FlvTag.frameTime = function(tag) {
           // Skip past "optional" portion of PTS header
           offset += pesHeaderLength;
 
-          // align the metadata stream PTS values with the start of
-          // the other elementary streams
-          if (!self.metadataStream.timestampOffset) {
-            self.metadataStream.timestampOffset = pts;
-          }
-
           if (pid === self.stream.programMapTable[STREAM_TYPES.h264]) {
-            if (!h264HasTimeStampOffset) {
-              h264HasTimeStampOffset = true;
-              if (timeStampOffset === undefined) {
-                timeStampOffset = pts;
-              }
-              h264Stream.setTimeStampOffset(timeStampOffset);
-            }
             h264Stream.setNextTimeStamp(pts,
                                         dts,
                                         dataAlignmentIndicator);
           } else if (pid === self.stream.programMapTable[STREAM_TYPES.adts]) {
-            if (!aacHasTimeStampOffset) {
-              aacHasTimeStampOffset = true;
-              if (timeStampOffset === undefined) {
-                timeStampOffset = pts;
-              }
-              aacStream.setTimeStampOffset(timeStampOffset);
-            }
             aacStream.setNextTimeStamp(pts,
                                        pesPacketSize,
                                        dataAlignmentIndicator);
-          } else {
-            self.metadataStream.push({
-              pts: pts,
-              dts: dts,
-              data: data.subarray(offset)
-            });
           }
         }
 
@@ -3054,6 +3719,12 @@ hls.FlvTag.frameTime = function(tag) {
           aacStream.writeBytes(data, offset, end - offset);
         } else if (pid === self.stream.programMapTable[STREAM_TYPES.h264]) {
           h264Stream.writeBytes(data, offset, end - offset);
+        } else if (pid === self.stream.programMapTable[STREAM_TYPES.metadata]) {
+          self.metadataStream.push({
+            pts: pts,
+            dts: dts,
+            data: data.subarray(offset)
+          });
         }
       } else if (self.stream.pmtPid === pid) {
         // similarly to the PAT, jump to the first byte of the section
@@ -3080,6 +3751,9 @@ hls.FlvTag.frameTime = function(tag) {
           // skip CRC and PSI data we dont care about
           // rest of header + CRC = 9 + 4
           pmtSectionLength -= 13;
+
+          // capture the PID of PCR packets so we can ignore them if we see any
+          self.stream.programMapTable.pcrPid = (data[offset + 8] & 0x1f) << 8 | data[offset + 9];
 
           // align offset to the first entry in the PMT
           offset += 12 + pmtProgramDescriptorsLength;
@@ -3117,10 +3791,16 @@ hls.FlvTag.frameTime = function(tag) {
           }
         }
         // We could test the CRC here to detect corruption with extra CPU cost
+      } else if (self.stream.networkPid === pid) {
+        // network information specific data (NIT) packet
       } else if (0x0011 === pid) {
         // Service Description Table
       } else if (0x1FFF === pid) {
         // NULL packet
+      } else if (self.stream.programMapTable.pcrPid) {
+        // program clock reference (PCR) PID for the primary program
+        // PTS values are sufficient to synchronize playback for us so
+        // we can safely ignore these
       } else {
         videojs.log("Unknown PID parsing TS packet: " + pid);
       }
@@ -3136,8 +3816,20 @@ hls.FlvTag.frameTime = function(tag) {
       h264Tags: function() {
         return h264Stream.tags.length;
       },
+      minVideoPts: function() {
+        return h264Stream.tags[0].pts;
+      },
+      maxVideoPts: function() {
+        return h264Stream.tags[h264Stream.tags.length - 1].pts;
+      },
       aacTags: function() {
         return aacStream.tags.length;
+      },
+      minAudioPts: function() {
+        return aacStream.tags[0].pts;
+      },
+      maxAudioPts: function() {
+        return aacStream.tags[aacStream.tags.length - 1].pts;
       }
     };
   };
@@ -3155,7 +3847,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],14:[function(require,module,exports){
+},{"video.js":undefined}],16:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -3239,7 +3931,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],15:[function(require,module,exports){
+},{"video.js":undefined}],17:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -3281,13 +3973,23 @@ videojs.Hls = videojs.Flash.extend({
     options.source = source;
     this.bytesReceived = 0;
 
+    this.hasPlayed_ = false;
+    this.on(player, 'loadstart', function() {
+      this.hasPlayed_ = false;
+      this.one(this.mediaSource, 'sourceopen', this.setupFirstPlay);
+    });
+    this.on(player, ['play', 'loadedmetadata'], this.setupFirstPlay);
+
+
     // TODO: After video.js#1347 is pulled in remove these lines
     this.currentTime = videojs.Hls.prototype.currentTime;
     this.setCurrentTime = videojs.Hls.prototype.setCurrentTime;
 
+    // a queue of segments that need to be transmuxed and processed,
+    // and then fed to the source buffer
+    this.segmentBuffer_ = [];
     // periodically check if new data needs to be downloaded or
     // buffered data should be appended to the source buffer
-    this.segmentBuffer_ = [];
     this.startCheckingBuffer_();
 
     videojs.Hls.prototype.src.call(this, options.source && options.source.src);
@@ -3299,6 +4001,11 @@ videojs.options.techOrder.unshift('hls');
 
 // the desired length of video to maintain in the buffer, in seconds
 videojs.Hls.GOAL_BUFFER_LENGTH = 30;
+
+// The number of target durations to exclude from the seekable window
+// for live playlists. Decreasing this value is likely to cause
+// playback stalls.
+videojs.Hls.LIVE_SYNC_DURATION_COUNT = 3;
 
 videojs.Hls.prototype.src = function(src) {
   var
@@ -3333,41 +4040,7 @@ videojs.Hls.prototype.src = function(src) {
 
   // if the stream contains ID3 metadata, expose that as a metadata
   // text track
-  (function() {
-    var
-      metadataStream = tech.segmentParser_.metadataStream,
-      textTrack;
-
-    // only expose metadata tracks to video.js versions that support
-    // dynamic text tracks (4.12+)
-    if (!tech.player().addTextTrack) {
-      return;
-    }
-
-    metadataStream.on('data', function(metadata) {
-      var i, frame, time, hexDigit;
-
-      // create the metadata track if this is the first ID3 tag we've
-      // seen
-      if (!textTrack) {
-        textTrack = tech.player().addTextTrack('metadata', 'Timed Metadata');
-
-        // build the dispatch type from the stream descriptor
-        // https://html.spec.whatwg.org/multipage/embedded-content.html#steps-to-expose-a-media-resource-specific-text-track
-        textTrack.inBandMetadataTrackDispatchType = videojs.Hls.SegmentParser.STREAM_TYPES.metadata.toString(16).toUpperCase();
-        for (i = 0; i < metadataStream.descriptor.length; i++) {
-          hexDigit = ('00' + metadataStream.descriptor[i].toString(16).toUpperCase()).slice(-2);
-          textTrack.inBandMetadataTrackDispatchType += hexDigit;
-        }
-      }
-
-      for (i = 0; i < metadata.frames.length; i++) {
-        frame = metadata.frames[i];
-        time = metadata.pts / 1000;
-        textTrack.addCue(new window.VTTCue(time, time, frame.value || frame.url));
-      }
-    });
-  })();
+  this.setupMetadataCueTranslation_();
 
   // load the MediaSource into the player
   this.mediaSource.addEventListener('sourceopen', videojs.bind(this, this.handleSourceOpen));
@@ -3377,21 +4050,17 @@ videojs.Hls.prototype.src = function(src) {
     this.playlists.dispose();
   }
 
+  // The index of the next segment to be downloaded in the current
+  // media playlist. When the current media playlist is live with
+  // expiring segments, it may be a different value from the media
+  // sequence number for a segment.
   this.mediaIndex = 0;
 
   this.playlists = new videojs.Hls.PlaylistLoader(this.src_, settings.withCredentials);
 
   this.playlists.on('loadedmetadata', videojs.bind(this, function() {
     var selectedPlaylist, loaderHandler, oldBitrate, newBitrate, segmentDuration,
-        segmentDlTime, setupEvents, threshold;
-
-    setupEvents = function() {
-      this.fillBuffer();
-
-
-
-      player.trigger('loadedmetadata');
-    };
+        segmentDlTime, threshold;
 
     oldMediaPlaylist = this.playlists.media();
 
@@ -3408,16 +4077,6 @@ videojs.Hls.prototype.src = function(src) {
       this.setBandwidth({
         bandwidth: this.playlists.bandwidth * 5
       });
-    }
-
-    // Start live playlists 30 seconds before the current time
-    // This is done using the old playlist because of a race condition
-    // where the playlist selected below may not be loaded quickly
-    // enough to have its segments available for review. When we receive
-    // a loadedplaylist event, we will call translateMediaIndex and
-    // maintain our position at the live point.
-    if (this.duration() === Infinity && this.mediaIndex === 0) {
-      this.mediaIndex = videojs.Hls.getMediaIndexForLive_(oldMediaPlaylist);
     }
 
     selectedPlaylist = this.selectPlaylist();
@@ -3442,12 +4101,16 @@ videojs.Hls.prototype.src = function(src) {
     if (newBitrate > oldBitrate && segmentDlTime <= threshold) {
       this.playlists.media(selectedPlaylist);
       loaderHandler = videojs.bind(this, function() {
-        setupEvents.call(this);
+        this.setupFirstPlay();
+        this.fillBuffer();
+        player.trigger('loadedmetadata');
         this.playlists.off('loadedplaylist', loaderHandler);
       });
       this.playlists.on('loadedplaylist', loaderHandler);
     } else {
-      setupEvents.call(this);
+      this.setupFirstPlay();
+      this.fillBuffer();
+      player.trigger('loadedmetadata');
     }
   }));
 
@@ -3499,7 +4162,7 @@ videojs.Hls.getMediaIndexForLive_ = function(selectedPlaylist) {
 
   var tailIterator = selectedPlaylist.segments.length,
       tailDuration = 0,
-      targetTail = (selectedPlaylist.targetDuration || 10) * 3;
+      targetTail = (selectedPlaylist.targetDuration || 10) * videojs.Hls.LIVE_SYNC_DURATION_COUNT;
 
   while (tailDuration < targetTail && tailIterator > 0) {
     tailDuration += selectedPlaylist.segments[tailIterator - 1].duration;
@@ -3516,14 +4179,133 @@ videojs.Hls.prototype.handleSourceOpen = function() {
     sourceBuffer = this.mediaSource.addSourceBuffer('video/flv; codecs="vp6,aac"');
 
   this.sourceBuffer = sourceBuffer;
-  sourceBuffer.appendBuffer(this.segmentParser_.getFlvHeader());
-
 
   // if autoplay is enabled, begin playback. This is duplicative of
   // code in video.js but is required because play() must be invoked
   // *after* the media source has opened.
+  // NOTE: moving this invocation of play() after
+  // sourceBuffer.appendBuffer() below caused live streams with
+  // autoplay to stall
   if (player.options().autoplay) {
     player.play();
+  }
+
+  sourceBuffer.appendBuffer(this.segmentParser_.getFlvHeader());
+};
+
+// register event listeners to transform in-band metadata events into
+// VTTCues on a text track
+videojs.Hls.prototype.setupMetadataCueTranslation_ = function() {
+  var
+    tech = this,
+    metadataStream = tech.segmentParser_.metadataStream,
+    textTrack;
+
+  // only expose metadata tracks to video.js versions that support
+  // dynamic text tracks (4.12+)
+  if (!tech.player().addTextTrack) {
+    return;
+  }
+
+  // add a metadata cue whenever a metadata event is triggered during
+  // segment parsing
+  metadataStream.on('data', function(metadata) {
+    var i, hexDigit;
+
+    // create the metadata track if this is the first ID3 tag we've
+    // seen
+    if (!textTrack) {
+      textTrack = tech.player().addTextTrack('metadata', 'Timed Metadata');
+
+      // build the dispatch type from the stream descriptor
+      // https://html.spec.whatwg.org/multipage/embedded-content.html#steps-to-expose-a-media-resource-specific-text-track
+      textTrack.inBandMetadataTrackDispatchType = videojs.Hls.SegmentParser.STREAM_TYPES.metadata.toString(16).toUpperCase();
+      for (i = 0; i < metadataStream.descriptor.length; i++) {
+        hexDigit = ('00' + metadataStream.descriptor[i].toString(16).toUpperCase()).slice(-2);
+        textTrack.inBandMetadataTrackDispatchType += hexDigit;
+      }
+    }
+
+    // store this event for processing once the muxing has finished
+    tech.segmentBuffer_[0].pendingMetadata.push({
+      textTrack: textTrack,
+      metadata: metadata
+    });
+  });
+
+  // when seeking, clear out all cues ahead of the earliest position
+  // in the new segment. keep earlier cues around so they can still be
+  // programmatically inspected even though they've already fired
+  tech.on(tech.player(), 'seeking', function() {
+    var media, startTime, i;
+    if (!textTrack) {
+      return;
+    }
+    media = tech.playlists.media();
+    startTime = tech.playlists.expiredPreDiscontinuity_ + tech.playlists.expiredPostDiscontinuity_;
+    startTime += videojs.Hls.Playlist.duration(media, media.mediaSequence, media.mediaSequence + tech.mediaIndex);
+
+    i = textTrack.cues.length;
+    while (i--) {
+      if (textTrack.cues[i].startTime >= startTime) {
+        textTrack.removeCue(textTrack.cues[i]);
+      }
+    }
+  });
+};
+
+videojs.Hls.prototype.addCuesForMetadata_ = function(segmentInfo) {
+  var i, cue, frame, metadata, minPts, segment, segmentOffset, textTrack, time;
+  segmentOffset = this.playlists.expiredPreDiscontinuity_;
+  segmentOffset += this.playlists.expiredPostDiscontinuity_;
+  segmentOffset += videojs.Hls.Playlist.duration(segmentInfo.playlist,
+                                                 segmentInfo.playlist.mediaSequence,
+                                                 segmentInfo.playlist.mediaSequence + segmentInfo.mediaIndex);
+  segment = segmentInfo.playlist.segments[segmentInfo.mediaIndex];
+  minPts = Math.min(isFinite(segment.minVideoPts) ? segment.minVideoPts : Infinity,
+                    isFinite(segment.minAudioPts) ? segment.minAudioPts : Infinity);
+
+  while (segmentInfo.pendingMetadata.length) {
+    metadata = segmentInfo.pendingMetadata[0].metadata;
+    textTrack = segmentInfo.pendingMetadata[0].textTrack;
+
+    // create cue points for all the ID3 frames in this metadata event
+    for (i = 0; i < metadata.frames.length; i++) {
+      frame = metadata.frames[i];
+      time = segmentOffset + ((metadata.pts - minPts) * 0.001);
+      cue = new window.VTTCue(time, time, frame.value || frame.url || '');
+      cue.frame = frame;
+      cue.pts_ = metadata.pts;
+      textTrack.addCue(cue);
+    }
+    segmentInfo.pendingMetadata.shift();
+  }
+};
+
+/**
+ * Seek to the latest media position if this is a live video and the
+ * player and video are loaded and initialized.
+ */
+videojs.Hls.prototype.setupFirstPlay = function() {
+  var seekable, media;
+  media = this.playlists.media();
+
+  // check that everything is ready to begin buffering
+  if (!this.hasPlayed_ &&
+      this.sourceBuffer &&
+      media &&
+      this.paused() === false) {
+
+    // only run this block once per video
+    this.hasPlayed_ = true;
+
+    if (this.duration() === Infinity) {
+      // seek to the latest media position for live videos
+      seekable = this.seekable();
+      if (seekable.length) {
+        this.setCurrentTime(seekable.end(0));
+      }
+    }
   }
 };
 
@@ -3536,13 +4318,20 @@ videojs.Hls.prototype.play = function() {
     this.mediaIndex = 0;
   }
 
-  if (this.duration() === Infinity && this.playlists.media() && !this.player().hasClass('vjs-has-started')) {
-    this.mediaIndex = videojs.Hls.getMediaIndexForLive_(this.playlists.media());
-    this.setCurrentTime(this.getCurrentTimeByMediaIndex_(this.playlists.media(), this.mediaIndex));
+  if (!this.hasPlayed_) {
+    videojs.Flash.prototype.play.apply(this, arguments);
+    return this.setupFirstPlay();
+  }
+
+  // if the viewer has paused and we fell out of the live window,
+  // seek forward to the earliest available position
+  if (this.duration() === Infinity &&
+      this.currentTime() < this.seekable().start(0)) {
+    this.setCurrentTime(this.seekable().start(0));
   }
 
   // delegate back to the Flash implementation
-  return videojs.Flash.prototype.play.apply(this, arguments);
+  videojs.Flash.prototype.play.apply(this, arguments);
 };
 
 videojs.Hls.prototype.currentTime = function() {
@@ -3562,15 +4351,30 @@ videojs.Hls.prototype.setCurrentTime = function(currentTime) {
     return 0;
   }
 
+  // it's clearly an edge-case but don't thrown an error if asked to
+  // seek within an empty playlist
+  if (!this.playlists.media().segments) {
+    return 0;
+  }
+
+  // clamp seeks to the available seekable time range
+  if (currentTime < this.seekable().start(0)) {
+    currentTime = this.seekable().start(0);
+  } else if (currentTime > this.seekable().end(0)) {
+    currentTime = this.seekable().end(0);
+  }
+
   // save the seek target so currentTime can report it correctly
   // while the seek is pending
   this.lastSeekedTime_ = currentTime;
 
   // determine the requested segment
-  this.mediaIndex = videojs.Hls.getMediaIndexByTime(this.playlists.media(), currentTime);
+  this.mediaIndex = this.playlists.getMediaIndexForTime_(currentTime);
 
   // abort any segments still being decoded
-  this.sourceBuffer.abort();
+  if (this.sourceBuffer) {
+    this.sourceBuffer.abort();
+  }
 
   // cancel outstanding requests and buffer appends
   this.cancelSegmentXhr();
@@ -3591,9 +4395,32 @@ videojs.Hls.prototype.setCurrentTime = function(currentTime) {
 videojs.Hls.prototype.duration = function() {
   var playlists = this.playlists;
   if (playlists) {
-    return videojs.Hls.getPlaylistTotalDuration(playlists.media());
+    return videojs.Hls.Playlist.duration(playlists.media());
   }
   return 0;
+};
+
+videojs.Hls.prototype.seekable = function() {
+  var currentSeekable, startOffset, media;
+
+  if (!this.playlists) {
+    return videojs.createTimeRange();
+  }
+  media = this.playlists.media();
+  if (!media) {
+    return videojs.createTimeRange();
+  }
+
+  // report the seekable range relative to the earliest possible
+  // position when the stream was first loaded
+  currentSeekable = videojs.Hls.Playlist.seekable(media);
+  if (!currentSeekable.length) {
+    return currentSeekable;
+  }
+
+  startOffset = this.playlists.expiredPostDiscontinuity_ - this.playlists.expiredPreDiscontinuity_;
+  return videojs.createTimeRange(startOffset,
+                                 startOffset + (currentSeekable.end(0) - currentSeekable.start(0)));
 };
 
 /**
@@ -3602,7 +4429,7 @@ videojs.Hls.prototype.duration = function() {
 videojs.Hls.prototype.updateDuration = function(playlist) {
   var player = this.player(),
       oldDuration = player.duration(),
-      newDuration = videojs.Hls.getPlaylistTotalDuration(playlist);
+      newDuration = videojs.Hls.Playlist.duration(playlist);
 
   // if the duration has changed, invalidate the cached value
   if (oldDuration !== newDuration) {
@@ -3673,7 +4500,9 @@ videojs.Hls.prototype.selectPlaylist = function () {
     oldvariant,
     bandwidthBestVariant,
     resolutionPlusOne,
-    resolutionBestVariant;
+    resolutionBestVariant,
+    playerWidth,
+    playerHeight;
 
   sortedPlaylists.sort(videojs.Hls.comparePlaylistBandwidth);
 
@@ -3709,6 +4538,9 @@ videojs.Hls.prototype.selectPlaylist = function () {
   // (this could be the lowest bitrate rendition as  we go through all of them above)
   variant = null;
 
+  playerWidth = parseInt(getComputedStyle(player.el()).width, 10);
+  playerHeight = parseInt(getComputedStyle(player.el()).height, 10);
+
   // iterate through the bandwidth-filtered playlists and find
   // best rendition by player dimension
   while (i--) {
@@ -3726,14 +4558,14 @@ videojs.Hls.prototype.selectPlaylist = function () {
 
     // since the playlists are sorted, the first variant that has
     // dimensions less than or equal to the player size is the best
-    if (variant.attributes.RESOLUTION.width === player.width() &&
-        variant.attributes.RESOLUTION.height === player.height()) {
+    if (variant.attributes.RESOLUTION.width === playerWidth &&
+        variant.attributes.RESOLUTION.height === playerHeight) {
       // if we have the exact resolution as the player use it
       resolutionPlusOne = null;
       resolutionBestVariant = variant;
       break;
-    } else if (variant.attributes.RESOLUTION.width < player.width() &&
-        variant.attributes.RESOLUTION.height < player.height()) {
+    } else if (variant.attributes.RESOLUTION.width < playerWidth &&
+        variant.attributes.RESOLUTION.height < playerHeight) {
       // if we don't have an exact match, see if we have a good higher quality variant to use
       if (oldvariant && oldvariant.attributes && oldvariant.attributes.RESOLUTION &&
           oldvariant.attributes.RESOLUTION.width && oldvariant.attributes.RESOLUTION.height) {
@@ -3802,6 +4634,12 @@ videojs.Hls.prototype.fillBuffer = function(offset) {
     segment,
     segmentUri;
 
+  // if preload is set to "none", do not download segments until playback is requested
+  if (!player.hasClass('vjs-has-started') &&
+      player.options().preload === 'none') {
+    return;
+  }
+
   // if a video has not been specified, do nothing
   if (!player.currentSrc() || !this.playlists) {
     return;
@@ -3816,6 +4654,20 @@ videojs.Hls.prototype.fillBuffer = function(offset) {
   if (this.playlists.state === "HAVE_NOTHING" ||
       !this.playlists.media() ||
       !this.playlists.media().segments) {
+    return;
+  }
+
+  // if this is a live video wait until playback has been requested to
+  // being buffering so we don't preload data that will never be
+  // played
+  if (!this.playlists.media().endList &&
+      !player.hasClass('vjs-has-started') &&
+      offset === undefined) {
+    return;
+  }
+
+  // if a playlist switch is in progress, wait for it to finish
+  if (this.playlists.state === 'SWITCHING_MEDIA') {
     return;
   }
 
@@ -3883,6 +4735,8 @@ videojs.Hls.prototype.loadSegment = function(segmentUri, offset) {
     responseType: 'arraybuffer',
     withCredentials: settings.withCredentials
   }, function(error, url) {
+    var segmentInfo;
+
     // the segment request is no longer outstanding
     tech.segmentXhr_ = null;
 
@@ -3912,15 +4766,29 @@ videojs.Hls.prototype.loadSegment = function(segmentUri, offset) {
     tech.setBandwidth(this);
 
     // package up all the work to append the segment
-    // if the segment is the start of a timestamp discontinuity,
-    // we have to wait until the sourcebuffer is empty before
-    // aborting the source buffer processing
-    tech.segmentBuffer_.push({
+    segmentInfo = {
+      // the segment's mediaIndex at the time it was received
       mediaIndex: tech.mediaIndex,
+      // the segment's playlist
       playlist: tech.playlists.media(),
+      // optionally, a time offset to seek to within the segment
       offset: offset,
-      bytes: new Uint8Array(this.response)
-    });
+      // unencrypted bytes of the segment
+      bytes: null,
+      // when a key is defined for this segment, the encrypted bytes
+      encryptedBytes: null,
+      // optionally, the decrypter that is unencrypting the segment
+      decrypter: null,
+      // metadata events discovered during muxing that need to be
+      // translated into cue points
+      pendingMetadata: []
+    };
+    if (segmentInfo.playlist.segments[segmentInfo.mediaIndex].key) {
+      segmentInfo.encryptedBytes = new Uint8Array(this.response);
+    } else {
+      segmentInfo.bytes = new Uint8Array(this.response);
+    }
+    tech.segmentBuffer_.push(segmentInfo);
     player.trigger('progress');
     tech.drainBuffer();
 
@@ -3935,72 +4803,123 @@ videojs.Hls.prototype.loadSegment = function(segmentUri, offset) {
 videojs.Hls.prototype.drainBuffer = function(event) {
   var
     i = 0,
+    segmentInfo,
     mediaIndex,
     playlist,
     offset,
     tags,
     bytes,
     segment,
-
+    decrypter,
+    segIv,
     ptsTime,
-    segmentOffset,
+    segmentOffset = 0,
     segmentBuffer = this.segmentBuffer_;
 
+  // if the buffer is empty or the source buffer hasn't been created
+  // yet, do nothing
   if (!segmentBuffer.length || !this.sourceBuffer) {
     return;
   }
 
-  mediaIndex = segmentBuffer[0].mediaIndex;
-  playlist = segmentBuffer[0].playlist;
-  offset = segmentBuffer[0].offset;
-  bytes = segmentBuffer[0].bytes;
+  // we can't append more data if the source buffer is busy processing
+  // what we've already sent
+  if (this.sourceBuffer.updating) {
+    return;
+  }
+
+  segmentInfo = segmentBuffer[0];
+
+  mediaIndex = segmentInfo.mediaIndex;
+  playlist = segmentInfo.playlist;
+  offset = segmentInfo.offset;
+  bytes = segmentInfo.bytes;
   segment = playlist.segments[mediaIndex];
 
-  if (segment.key) {
+  if (segment.key && !bytes) {
+
     // this is an encrypted segment
     // if the key download failed, we want to skip this segment
     // but if the key hasn't downloaded yet, we want to try again later
     if (keyFailed(segment.key)) {
       return segmentBuffer.shift();
     } else if (!segment.key.bytes) {
+
       // trigger a key request if one is not already in-flight
       return this.fetchKeys_();
+
+    } else if (segmentInfo.decrypter) {
+
+      // decryption is in progress, try again later
+      return;
+
     } else {
       // if the media sequence is greater than 2^32, the IV will be incorrect
       // assuming 10s segments, that would be about 1300 years
-      var segIv = segment.key.iv || new Uint32Array([0, 0, 0, mediaIndex + playlist.mediaSequence]);
-      bytes = videojs.Hls.decrypt(bytes,
-                                  segment.key.bytes,
-                                  segIv);
+      segIv = segment.key.iv || new Uint32Array([0, 0, 0, mediaIndex + playlist.mediaSequence]);
+
+      // create a decrypter to incrementally decrypt the segment
+      decrypter = new videojs.Hls.Decrypter(segmentInfo.encryptedBytes,
+                                            segment.key.bytes,
+                                            segIv,
+                                            function(err, bytes) {
+                                              segmentInfo.bytes = bytes;
+                                            });
+      segmentInfo.decrypter = decrypter;
+      return;
     }
   }
 
   event = event || {};
-  segmentOffset = videojs.Hls.getPlaylistDuration(playlist, 0, mediaIndex) * 1000;
 
   // transmux the segment data from MP2T to FLV
   this.segmentParser_.parseSegmentBinaryData(bytes);
   this.segmentParser_.flushTags();
 
   tags = [];
+
+  if (this.segmentParser_.tagsAvailable()) {
+    // record PTS information for the segment so we can calculate
+    // accurate durations and seek reliably
+    if (this.segmentParser_.stats.h264Tags()) {
+      segment.minVideoPts = this.segmentParser_.stats.minVideoPts();
+      segment.maxVideoPts = this.segmentParser_.stats.maxVideoPts();
+    }
+    if (this.segmentParser_.stats.aacTags()) {
+      segment.minAudioPts = this.segmentParser_.stats.minAudioPts();
+      segment.maxAudioPts = this.segmentParser_.stats.maxAudioPts();
+    }
+  }
+
   while (this.segmentParser_.tagsAvailable()) {
     tags.push(this.segmentParser_.getNextTag());
   }
+
+  this.addCuesForMetadata_(segmentInfo);
+  this.updateDuration(this.playlists.media());
 
   // if we're refilling the buffer after a seek, scan through the muxed
   // FLV tags until we find the one that is closest to the desired
   // playback time
   if (typeof offset === 'number') {
-    ptsTime = offset - segmentOffset + tags[0].pts;
+    if (tags.length) {
+      // determine the offset within this segment we're seeking to
+      segmentOffset = this.playlists.expiredPostDiscontinuity_ + this.playlists.expiredPreDiscontinuity_;
+      segmentOffset += videojs.Hls.Playlist.duration(playlist,
+                                                     playlist.mediaSequence,
+                                                     playlist.mediaSequence + mediaIndex);
+      segmentOffset = offset - (segmentOffset * 1000);
+      ptsTime = segmentOffset + tags[0].pts;
 
-    while (tags[i].pts < ptsTime) {
-      i++;
+      while (tags[i + 1] && tags[i].pts < ptsTime) {
+        i++;
+      }
+
+      // tell the SWF the media position of the first tag we'll be delivering
+      this.el().vjs_setProperty('currentTime', ((tags[i].pts - ptsTime + offset) * 0.001));
+
+      tags = tags.slice(i);
     }
-
-    // tell the SWF where we will be seeking to
-    this.el().vjs_setProperty('currentTime', (tags[i].pts - tags[0].pts + segmentOffset) * 0.001);
-
-    tags = tags.slice(i);
 
     this.lastSeekedTime_ = null;
   }
@@ -4011,13 +4930,18 @@ videojs.Hls.prototype.drainBuffer = function(event) {
     this.el().vjs_discontinuity();
   }
 
-  for (i = 0; i < tags.length; i++) {
-    // queue up the bytes to be appended to the SourceBuffer
-    // the queue gives control back to the browser between tags
-    // so that large segments don't cause a "hiccup" in playback
-
-    this.sourceBuffer.appendBuffer(tags[i].bytes, this.player());
-  }
+  (function() {
+    var segmentByteLength = 0, j, segment;
+    for (i = 0; i < tags.length; i++) {
+      segmentByteLength += tags[i].bytes.byteLength;
+    }
+    segment = new Uint8Array(segmentByteLength);
+    for (i = 0, j = 0; i < tags.length; i++) {
+      segment.set(tags[i].bytes, j);
+      j += tags[i].bytes.byteLength;
+    }
+    this.sourceBuffer.appendBuffer(segment);
+  }).call(this);
 
   // we're done processing this segment
   segmentBuffer.shift();
@@ -4148,20 +5072,9 @@ videojs.Hls.canPlaySource = function(srcObj) {
  * @return {number} the duration between the start index and end index.
  */
 videojs.Hls.getPlaylistDuration = function(playlist, startIndex, endIndex) {
-  var dur = 0,
-      segment,
-      i;
-
-  startIndex = startIndex || 0;
-  endIndex = endIndex !== undefined ? endIndex : (playlist.segments || []).length;
-  i = endIndex - 1;
-
-  for (; i >= startIndex; i--) {
-    segment = playlist.segments[i];
-    dur += (segment.duration !== undefined ? segment.duration : playlist.targetDuration) || 0;
-  }
-
-  return dur;
+  videojs.log.warn('videojs.Hls.getPlaylistDuration is deprecated. ' +
+                   'Use videojs.Hls.Playlist.duration instead');
+  return videojs.Hls.Playlist.duration(playlist, startIndex, endIndex);
 };
 
 /**
@@ -4170,21 +5083,9 @@ videojs.Hls.getPlaylistDuration = function(playlist, startIndex, endIndex) {
  * @return {number} the currently known duration, in seconds
  */
 videojs.Hls.getPlaylistTotalDuration = function(playlist) {
-  if (!playlist) {
-    return 0;
-  }
-
-  // if present, use the duration specified in the playlist
-  if (playlist.totalDuration) {
-    return playlist.totalDuration;
-  }
-
-  // duration should be Infinity for live playlists
-  if (!playlist.endList) {
-    return window.Infinity;
-  }
-
-  return videojs.Hls.getPlaylistDuration(playlist);
+  videojs.log.warn('videojs.Hls.getPlaylistTotalDuration is deprecated. ' +
+                   'Use videojs.Hls.Playlist.duration instead');
+  return videojs.Hls.Playlist.duration(playlist);
 };
 
 /**
@@ -4218,7 +5119,7 @@ videojs.Hls.translateMediaIndex = function(mediaIndex, original, update) {
   // bitrate switches should be happening here.
   translatedMediaIndex = (mediaIndex + (original.mediaSequence - update.mediaSequence));
 
-  if (translatedMediaIndex >= update.segments.length || translatedMediaIndex < 0) {
+  if (translatedMediaIndex > update.segments.length || translatedMediaIndex < 0) {
     // recalculate the live point if the streams are too far out of sync
     return videojs.Hls.getMediaIndexForLive_(update) + 1;
   }
@@ -4227,56 +5128,14 @@ videojs.Hls.translateMediaIndex = function(mediaIndex, original, update) {
 };
 
 /**
- * Determine the media index in one playlist by a time in seconds. This
- * function iterates through the segments of a playlist and creates TimeRange
- * objects for each and then returns the most appropriate segment index by
- * checking the time value versus each range.
+ * Deprecated.
  *
- * @param playlist {object} The playlist of the segments being searched.
- * @param time {number} The time in seconds of what segment you want.
- * @returns {number} The media index, or -1 if none appropriate.
+ * @deprecated use player.hls.playlists.getMediaIndexForTime_() instead
  */
-videojs.Hls.getMediaIndexByTime = function(playlist, time) {
-  var index, counter, timeRanges, currentSegmentRange;
-
-  timeRanges = [];
-  for (index = 0; index < playlist.segments.length; index++) {
-    currentSegmentRange = {};
-    currentSegmentRange.start = (index === 0) ? 0 : timeRanges[index - 1].end;
-    currentSegmentRange.end = currentSegmentRange.start + playlist.segments[index].duration;
-    timeRanges.push(currentSegmentRange);
-  }
-
-  for (counter = 0; counter < timeRanges.length; counter++) {
-    if (time >= timeRanges[counter].start && time < timeRanges[counter].end) {
-      return counter;
-    }
-  }
-
-  return -1;
-};
-
-/**
- * Determine the current time in seconds in one playlist by a media index. This
- * function iterates through the segments of a playlist up to the specified index
- * and then returns the time up to that point.
- *
- * @param playlist {object} The playlist of the segments being searched.
- * @param mediaIndex {number} The index of the target segment in the playlist.
- * @returns {number} The current time to that point, or 0 if none appropriate.
- */
-videojs.Hls.prototype.getCurrentTimeByMediaIndex_ = function(playlist, mediaIndex) {
-  var index, time = 0;
-
-  if (!playlist.segments || mediaIndex === 0) {
-    return 0;
-  }
-
-  for (index = 0; index < mediaIndex; index++) {
-    time += playlist.segments[index].duration;
-  }
-
-  return time;
+videojs.Hls.getMediaIndexByTime = function() {
+  videojs.log.warn('getMediaIndexByTime is deprecated. ' +
+                   'Use PlaylistLoader.getMediaIndexForTime_ instead.');
+  return 0;
 };
 
 /**
@@ -4379,7 +5238,7 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],16:[function(require,module,exports){
+},{"video.js":undefined}],18:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -4474,7 +5333,7 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"video.js":undefined}],17:[function(require,module,exports){
+},{"video.js":undefined}],19:[function(require,module,exports){
 (function (global){
 
 ; videojs = global.videojs = require("video.js");
@@ -4672,20 +5531,40 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
           // schedule another append if necessary
           if (bufferSize !== 0) {
             scheduleTick(append);
-          } else if (self.source.readyState === 'ended') {
-            self.source.swfObj.vjs_endOfStream();
+          } else {
+            self.updating = false;
+            self.trigger({ type: 'updateend' });
+
+            if (self.source.readyState === 'ended') {
+              self.source.swfObj.vjs_endOfStream();
+            }
           }
         };
 
     videojs.SourceBuffer.prototype.init.call(this);
     this.source = source;
 
+    // indicates whether the asynchronous continuation of an operation
+    // is still being processed
+    // see https://w3c.github.io/media-source/#widl-SourceBuffer-updating
+    this.updating = false;
+
     // accept video data and pass to the video (swf) object
     this.appendBuffer = function(uint8Array){
+      var error;
+
+      if (this.updating) {
+        error = new Error('SourceBuffer.append() cannot be called ' +
+                          'while an update is in progress');
+        error.name = 'InvalidStateError';
+        error.code = 11;
+        throw error;
+      }
       if (buffer.length === 0) {
         scheduleTick(append);
       }
 
+      this.updating = true;
       this.source.readyState = 'open';
       this.trigger({ type: 'update' });
 
@@ -4698,6 +5577,13 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
       buffer = [];
       bufferSize = 0;
       this.source.swfObj.vjs_abort();
+
+      // report any outstanding updates have ended
+      if (this.updating) {
+        this.updating = false;
+        this.trigger({ type: 'updateend' });
+      }
+
     };
   };
   videojs.SourceBuffer.prototype = new EventEmitter();
