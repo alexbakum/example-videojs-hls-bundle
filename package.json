@@ -34,6 +34,7 @@
     ]
   },
   "browser": {
+    "videojs/video-js": "./node_modules/video.js/dist/video-js/video.dev.js",
     "contrib/ads/videojs-ads": "./node_modules/videojs-contrib-ads/src/videojs.ads.js",
     "videojs-ima": "./node_modules/videojs-ima/src/videojs.ima.js",
     "videojs-ga": "./node_modules/videojs-ga/dist/videojs.ga.js",
@@ -56,83 +57,83 @@
   "browserify-shim": {
     "contrib/ads/videojs-ads": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "videojs-ga": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "videojs-ima": {
       "depends": [
-        "video.js:videojs",
+        "videojs/video-js:videojs",
         "contrib/ads/videojs-ads"
       ]
     },
     "contrib/hls/videojs-hls": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/stream": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/flv-tag": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/exp-golomb": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/h264-stream": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/aac-stream": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/metadata-stream": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/segment-parser": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/m3u8/m3u8-parser": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/xhr": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/playlist-loader": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/hls/decrypter": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     },
     "contrib/media-sources": {
       "depends": [
-        "video.js:videojs"
+        "videojs/video-js:videojs"
       ]
     }
   }

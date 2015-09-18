@@ -3,7 +3,7 @@ global.WebVTT = vtt.WebVTT;
 global.VTTCue = vtt.VTTCue;
 global.VTTRegion = vtt.VTTRegion;
 global.pkcs7 = require('pkcs7'); // required for hls plugin
-global.videojs = require('video.js');
+global.videojs = require('videojs/video-js');
 
 // persistent volume
 require('videojs-persistvolume');

@@ -1,4 +1,4 @@
-var vjs = require('videojs');
+var vjs = require('videojs/video-js');
 global.pkcs7 = require('pkcs7');
 
 require('contrib/media-sources');
