@@ -11872,7 +11872,7 @@ vjs.plugin = function(name, init){
 },{}],3:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
 * videojs-ga - v0.4.2 - 2015-02-06
@@ -12027,4 +12027,4 @@ vjs.plugin = function(name, init){
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":2}]},{},[1]);
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":2}]},{},[1]);

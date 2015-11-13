@@ -12012,7 +12012,7 @@ vjs.plugin = function(name, init){
 },{}],6:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 var
@@ -12244,10 +12244,10 @@ window.videojs.Hls.AacStream = function() {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],7:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],7:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  *
@@ -12618,10 +12618,10 @@ videojs.Hls.AsyncStream = AsyncStream;
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],8:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],8:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 
@@ -12776,10 +12776,10 @@ window.videojs.Hls.ExpGolomb = function(workingData) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],9:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],9:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * An object that stores the bytes of an FLV tag and methods for
@@ -13151,7 +13151,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],10:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],10:[function(require,module,exports){
 (function() {
   var
     H264ExtraData,
@@ -13369,7 +13369,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],11:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -13640,10 +13640,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],12:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],12:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Utilities for parsing M3U8 files. If the entire manifest is available,
@@ -14237,10 +14237,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],13:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],13:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Accepts program elementary stream (PES) data events and parses out
@@ -14456,10 +14456,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],14:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],14:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A state machine that manages the loading, caching, and updating of
@@ -14916,7 +14916,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],15:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],15:[function(require,module,exports){
 /**
  * Playlist related utilities.
  */
@@ -15218,7 +15218,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],16:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -15716,10 +15716,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],17:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],17:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A lightweight readable stream implemention that handles event dispatching.
@@ -15800,10 +15800,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],18:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],18:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  * videojs-hls
@@ -17107,10 +17107,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],19:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],19:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(videojs){
   /**
@@ -17202,10 +17202,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],20:[function(require,module,exports){
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],20:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window){
   var urlCount = 0,
@@ -17503,4 +17503,4 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/Users/alexanderbakum/github/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}]},{},[1]);
+},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}]},{},[1]);

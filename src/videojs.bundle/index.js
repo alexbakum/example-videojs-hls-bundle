@@ -4,6 +4,7 @@ global.VTTCue = vtt.VTTCue;
 global.VTTRegion = vtt.VTTRegion;
 global.pkcs7 = require('pkcs7'); // required for hls plugin
 global.videojs = require('videojs/video-js');
+global.Hls = require('hls.js/src/hls.js');
 
 // persistent volume
 require('videojs-persistvolume');
@@ -25,6 +26,7 @@ require('contrib/hls/xhr');
 require('contrib/hls/playlist');
 require('contrib/hls/playlist-loader');
 require('contrib/hls/decrypter');
+require('videojs/videojs-hlsjs.js');
 
 // Google IMA
 require('videojs-ima');
