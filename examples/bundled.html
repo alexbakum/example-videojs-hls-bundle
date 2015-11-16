@@ -21,7 +21,7 @@
         var player, sendBeacon;
 
         videojs.options.flash.swf = '../dist/swf/video-js.swf';
-        videojs('player', {width: 640, height: 400, techOrder: ['hls', 'flash', 'html5']}, function() {
+        videojs('player', {width: 640, height: 400, techOrder: ['hlsJs', 'hls', 'flash', 'html5']}, function() {
             player = this;
             // exposing sendbeacon() function
             sendBeacon = player.ga({debug: true}).sendbeacon;

@@ -9,6 +9,8 @@
   "author": "Alexander Bakum <nnm2006medved@gmail.com>",
   "license": "WTFPL",
   "dependencies": {
+    "hls.js": "git+https://github.com/dailymotion/hls.js.git",
+    "videojs-hlsjs": "git+https://github.com/benjipott/videojs-hlsjs.git",
     "pkcs7": "^0.2.3",
     "video.js": "git://github.com/alexbakum/video.js#feature/v4.12.15-subscribe",
     "videojs-contrib-ads": "^2.2.1",
@@ -24,6 +26,7 @@
     "browser-sync": "^2.6.4",
     "browserify": "^9.0.8",
     "browserify-shim": "^3.8.5",
+    "bundle-collapser": "^1.2.1",
     "gulp": "^3.8.11",
     "gulp-util": "^3.0.4",
     "vinyl-source-stream": "^1.1.0"
@@ -35,6 +38,7 @@
   },
   "browser": {
     "videojs/video-js": "./node_modules/video.js/dist/video-js/video.dev.js",
+    "videojs/videojs-hlsjs.js": "./node_modules/videojs-hlsjs/dist/videojs-hlsjs.js",
     "contrib/ads/videojs-ads": "./node_modules/videojs-contrib-ads/src/videojs.ads.js",
     "videojs-ima": "./node_modules/videojs-ima/src/videojs.ima.js",
     "videojs-ga": "./node_modules/videojs-ga/dist/videojs.ga.js",
