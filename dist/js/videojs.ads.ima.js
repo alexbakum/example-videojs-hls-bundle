@@ -1,6 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-require('videojs-ima');
-},{"videojs-ima":4}],2:[function(require,module,exports){
+require(4);
+},{"4":4}],2:[function(require,module,exports){
 /**
  * @fileoverview Main function src.
  */
@@ -11872,7 +11872,7 @@ vjs.plugin = function(name, init){
 },{}],3:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(2);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Basic Ad support plugin for video.js.
@@ -12694,11 +12694,11 @@ var
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":2}],4:[function(require,module,exports){
+},{"2":2}],4:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
-require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js");
+; videojs = global.videojs = require(2);
+require(3);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Copyright 2014 Google Inc.
@@ -13817,4 +13817,4 @@ require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/nod
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":2,"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js":3}]},{},[1]);
+},{"2":2,"3":3}]},{},[1]);

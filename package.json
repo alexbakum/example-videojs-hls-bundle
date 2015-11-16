@@ -26,6 +26,7 @@
     "browser-sync": "^2.6.4",
     "browserify": "^9.0.8",
     "browserify-shim": "^3.8.5",
+    "bundle-collapser": "^1.2.1",
     "gulp": "^3.8.11",
     "gulp-util": "^3.0.4",
     "vinyl-source-stream": "^1.1.0"

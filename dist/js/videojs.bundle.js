@@ -1,42 +1,41 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
-var vtt = require('vtt.js');
+var vtt = require(46);
 global.WebVTT = vtt.WebVTT;
 global.VTTCue = vtt.VTTCue;
 global.VTTRegion = vtt.VTTRegion;
-global.pkcs7 = require('pkcs7'); // required for hls plugin
-global.videojs = require('videojs/video-js');
-global.Hls = require('hls.js/src/hls.js');
+global.pkcs7 = require(23); // required for hls plugin
+global.videojs = require(25);
+global.Hls = require(15);
 
 // persistent volume
-require('videojs-persistvolume');
+require(45);
 // Google Analytics
-require('videojs-ga');
+require(42);
 // hls playback
-require('contrib/media-sources');
-require('contrib/hls/videojs-hls');
-require('contrib/hls/stream');
-require('contrib/hls/flv-tag');
-require('contrib/hls/exp-golomb');
-require('contrib/hls/h264-extradata');
-require('contrib/hls/h264-stream');
-require('contrib/hls/aac-stream');
-require('contrib/hls/metadata-stream');
-require('contrib/hls/segment-parser');
-require('contrib/hls/m3u8/m3u8-parser');
-require('contrib/hls/xhr');
-require('contrib/hls/playlist');
-require('contrib/hls/playlist-loader');
-require('contrib/hls/decrypter');
-require('contrib/hls/decrypter');
-require('videojs/videojs-hlsjs.js');
+require(41);
+require(39);
+require(38);
+require(30);
+require(29);
+require(31);
+require(32);
+require(27);
+require(34);
+require(37);
+require(33);
+require(40);
+require(36);
+require(35);
+require(28);
+require(43);
 
 // Google IMA
-require('videojs-ima');
+require(44);
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"contrib/hls/aac-stream":27,"contrib/hls/decrypter":28,"contrib/hls/exp-golomb":29,"contrib/hls/flv-tag":30,"contrib/hls/h264-extradata":31,"contrib/hls/h264-stream":32,"contrib/hls/m3u8/m3u8-parser":33,"contrib/hls/metadata-stream":34,"contrib/hls/playlist":36,"contrib/hls/playlist-loader":35,"contrib/hls/segment-parser":37,"contrib/hls/stream":38,"contrib/hls/videojs-hls":39,"contrib/hls/xhr":40,"contrib/media-sources":41,"hls.js/src/hls.js":15,"pkcs7":23,"videojs-ga":42,"videojs-ima":44,"videojs-persistvolume":45,"videojs/video-js":25,"videojs/videojs-hlsjs.js":43,"vtt.js":46}],2:[function(require,module,exports){
+},{"15":15,"23":23,"25":25,"27":27,"28":28,"29":29,"30":30,"31":31,"32":32,"33":33,"34":34,"35":35,"36":36,"37":37,"38":38,"39":39,"40":40,"41":41,"42":42,"43":43,"44":44,"45":45,"46":46}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -413,7 +412,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
@@ -504,7 +503,7 @@ var AbrController = (function () {
 exports['default'] = AbrController;
 module.exports = exports['default'];
 
-},{"../events":13}],5:[function(require,module,exports){
+},{"13":13}],5:[function(require,module,exports){
 /*
  * Buffer Controller
 */
@@ -521,21 +520,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
-var _demuxDemuxer = require('../demux/demuxer');
+var _demuxDemuxer = require(9);
 
 var _demuxDemuxer2 = _interopRequireDefault(_demuxDemuxer);
 
-var _helperLevelHelper = require('../helper/level-helper');
+var _helperLevelHelper = require(14);
 
 var _helperLevelHelper2 = _interopRequireDefault(_helperLevelHelper);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 var State = {
   ERROR: -2,
@@ -1634,7 +1633,7 @@ var BufferController = (function () {
 exports['default'] = BufferController;
 module.exports = exports['default'];
 
-},{"../demux/demuxer":9,"../errors":12,"../events":13,"../helper/level-helper":14,"../utils/logger":20}],6:[function(require,module,exports){
+},{"12":12,"13":13,"14":14,"20":20,"9":9}],6:[function(require,module,exports){
 /*
  * Level Controller
 */
@@ -1651,13 +1650,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 var LevelController = (function () {
   function LevelController(hls) {
@@ -1917,7 +1916,7 @@ var LevelController = (function () {
 exports['default'] = LevelController;
 module.exports = exports['default'];
 
-},{"../errors":12,"../events":13,"../utils/logger":20}],7:[function(require,module,exports){
+},{"12":12,"13":13,"20":20}],7:[function(require,module,exports){
 /*  inline demuxer.
  *   probe fragments and instantiate appropriate demuxer depending on content type (TSDemuxer, AACDemuxer, ...)
  */
@@ -1934,13 +1933,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
-var _demuxTsdemuxer = require('../demux/tsdemuxer');
+var _demuxTsdemuxer = require(11);
 
 var _demuxTsdemuxer2 = _interopRequireDefault(_demuxTsdemuxer);
 
@@ -1991,7 +1990,7 @@ var DemuxerInline = (function () {
 exports['default'] = DemuxerInline;
 module.exports = exports['default'];
 
-},{"../demux/tsdemuxer":11,"../errors":12,"../events":13}],8:[function(require,module,exports){
+},{"11":11,"12":12,"13":13}],8:[function(require,module,exports){
 /* demuxer web worker. 
  *  - listen to worker message, and trigger DemuxerInline upon reception of Fragments.
  *  - provides MP4 Boxes back to main thread using [transferable objects](https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast) in order to minimize message passing overhead.
@@ -2005,19 +2004,19 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _demuxDemuxerInline = require('../demux/demuxer-inline');
+var _demuxDemuxerInline = require(7);
 
 var _demuxDemuxerInline2 = _interopRequireDefault(_demuxDemuxerInline);
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _events3 = require('events');
+var _events3 = require(2);
 
 var _events4 = _interopRequireDefault(_events3);
 
-var _remuxMp4Remuxer = require('../remux/mp4-remuxer');
+var _remuxMp4Remuxer = require(19);
 
 var _remuxMp4Remuxer2 = _interopRequireDefault(_remuxMp4Remuxer);
 
@@ -2098,7 +2097,7 @@ var DemuxerWorker = function DemuxerWorker(self) {
 exports['default'] = DemuxerWorker;
 module.exports = exports['default'];
 
-},{"../demux/demuxer-inline":7,"../events":13,"../remux/mp4-remuxer":19,"events":2}],9:[function(require,module,exports){
+},{"13":13,"19":19,"2":2,"7":7}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2111,21 +2110,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _demuxDemuxerInline = require('../demux/demuxer-inline');
+var _demuxDemuxerInline = require(7);
 
 var _demuxDemuxerInline2 = _interopRequireDefault(_demuxDemuxerInline);
 
-var _demuxDemuxerWorker = require('../demux/demuxer-worker');
+var _demuxDemuxerWorker = require(8);
 
 var _demuxDemuxerWorker2 = _interopRequireDefault(_demuxDemuxerWorker);
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
-var _remuxMp4Remuxer = require('../remux/mp4-remuxer');
+var _remuxMp4Remuxer = require(19);
 
 var _remuxMp4Remuxer2 = _interopRequireDefault(_remuxMp4Remuxer);
 
@@ -2137,7 +2136,7 @@ var Demuxer = (function () {
     if (hls.config.enableWorker && typeof Worker !== 'undefined') {
       _utilsLogger.logger.log('demuxing in webworker');
       try {
-        var work = require('webworkify');
+        var work = require(3);
         this.w = work(_demuxDemuxerWorker2['default']);
         this.onwmsg = this.onWorkerMessage.bind(this);
         this.w.addEventListener('message', this.onwmsg);
@@ -2224,7 +2223,7 @@ var Demuxer = (function () {
 exports['default'] = Demuxer;
 module.exports = exports['default'];
 
-},{"../demux/demuxer-inline":7,"../demux/demuxer-worker":8,"../events":13,"../remux/mp4-remuxer":19,"../utils/logger":20,"webworkify":3}],10:[function(require,module,exports){
+},{"13":13,"19":19,"20":20,"3":3,"7":7,"8":8}],10:[function(require,module,exports){
 /**
  * Parser for exponential Golomb codes, a variable-bitwidth number encoding scheme used by h264.
 */
@@ -2239,7 +2238,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
 var ExpGolomb = (function () {
   function ExpGolomb(data) {
@@ -2516,7 +2515,7 @@ var ExpGolomb = (function () {
 exports['default'] = ExpGolomb;
 module.exports = exports['default'];
 
-},{"../utils/logger":20}],11:[function(require,module,exports){
+},{"20":20}],11:[function(require,module,exports){
 /**
  * highly optimized TS demuxer:
  * parse PAT, PMT
@@ -2540,19 +2539,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _expGolomb = require('./exp-golomb');
+var _expGolomb = require(10);
 
 var _expGolomb2 = _interopRequireDefault(_expGolomb);
 
 // import Hex from '../utils/hex';
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 var TSDemuxer = (function () {
   function TSDemuxer(observer, remuxerClass) {
@@ -3208,7 +3207,7 @@ var TSDemuxer = (function () {
 exports['default'] = TSDemuxer;
 module.exports = exports['default'];
 
-},{"../errors":12,"../events":13,"../utils/logger":20,"./exp-golomb":10}],12:[function(require,module,exports){
+},{"10":10,"12":12,"13":13,"20":20}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3323,7 +3322,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
 var LevelHelper = (function () {
   function LevelHelper() {
@@ -3454,7 +3453,7 @@ var LevelHelper = (function () {
 exports['default'] = LevelHelper;
 module.exports = exports['default'];
 
-},{"../utils/logger":20}],15:[function(require,module,exports){
+},{"20":20}],15:[function(require,module,exports){
 /**
  * HLS interface
  */
@@ -3470,41 +3469,41 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('./events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _errors = require('./errors');
+var _errors = require(12);
 
-var _loaderPlaylistLoader = require('./loader/playlist-loader');
+var _loaderPlaylistLoader = require(17);
 
 var _loaderPlaylistLoader2 = _interopRequireDefault(_loaderPlaylistLoader);
 
-var _loaderFragmentLoader = require('./loader/fragment-loader');
+var _loaderFragmentLoader = require(16);
 
 var _loaderFragmentLoader2 = _interopRequireDefault(_loaderFragmentLoader);
 
-var _controllerAbrController = require('./controller/abr-controller');
+var _controllerAbrController = require(4);
 
 var _controllerAbrController2 = _interopRequireDefault(_controllerAbrController);
 
-var _controllerBufferController = require('./controller/buffer-controller');
+var _controllerBufferController = require(5);
 
 var _controllerBufferController2 = _interopRequireDefault(_controllerBufferController);
 
-var _controllerLevelController = require('./controller/level-controller');
+var _controllerLevelController = require(6);
 
 var _controllerLevelController2 = _interopRequireDefault(_controllerLevelController);
 
 //import FPSController from './controller/fps-controller';
 
-var _utilsLogger = require('./utils/logger');
+var _utilsLogger = require(20);
 
-var _utilsXhrLoader = require('./utils/xhr-loader');
+var _utilsXhrLoader = require(21);
 
 var _utilsXhrLoader2 = _interopRequireDefault(_utilsXhrLoader);
 
-var _events3 = require('events');
+var _events3 = require(2);
 
 var _events4 = _interopRequireDefault(_events3);
 
@@ -3825,7 +3824,7 @@ var Hls = (function () {
 exports['default'] = Hls;
 module.exports = exports['default'];
 
-},{"./controller/abr-controller":4,"./controller/buffer-controller":5,"./controller/level-controller":6,"./errors":12,"./events":13,"./loader/fragment-loader":16,"./loader/playlist-loader":17,"./utils/logger":20,"./utils/xhr-loader":21,"events":2}],16:[function(require,module,exports){
+},{"12":12,"13":13,"16":16,"17":17,"2":2,"20":20,"21":21,"4":4,"5":5,"6":6}],16:[function(require,module,exports){
 /*
  * Fragment Loader
 */
@@ -3842,11 +3841,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 var FragmentLoader = (function () {
   function FragmentLoader(hls) {
@@ -3911,7 +3910,7 @@ var FragmentLoader = (function () {
 exports['default'] = FragmentLoader;
 module.exports = exports['default'];
 
-},{"../errors":12,"../events":13}],17:[function(require,module,exports){
+},{"12":12,"13":13}],17:[function(require,module,exports){
 /**
  * Playlist Loader
 */
@@ -3928,11 +3927,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 //import {logger} from '../utils/logger';
 
@@ -4198,7 +4197,7 @@ var PlaylistLoader = (function () {
 exports['default'] = PlaylistLoader;
 module.exports = exports['default'];
 
-},{"../errors":12,"../events":13}],18:[function(require,module,exports){
+},{"12":12,"13":13}],18:[function(require,module,exports){
 /**
  * Generate MP4 Box
 */
@@ -4684,17 +4683,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _events = require('../events');
+var _events = require(13);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
-var _remuxMp4Generator = require('../remux/mp4-generator');
+var _remuxMp4Generator = require(18);
 
 var _remuxMp4Generator2 = _interopRequireDefault(_remuxMp4Generator);
 
-var _errors = require('../errors');
+var _errors = require(12);
 
 var MP4Remuxer = (function () {
   function MP4Remuxer(observer) {
@@ -5131,7 +5130,7 @@ var MP4Remuxer = (function () {
 exports['default'] = MP4Remuxer;
 module.exports = exports['default'];
 
-},{"../errors":12,"../events":13,"../remux/mp4-generator":18,"../utils/logger":20}],20:[function(require,module,exports){
+},{"12":12,"13":13,"18":18,"20":20}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5188,7 +5187,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var _utilsLogger = require('../utils/logger');
+var _utilsLogger = require(20);
 
 var XhrLoader = (function () {
   function XhrLoader(config) {
@@ -5306,7 +5305,7 @@ var XhrLoader = (function () {
 exports['default'] = XhrLoader;
 module.exports = exports['default'];
 
-},{"../utils/logger":20}],22:[function(require,module,exports){
+},{"20":20}],22:[function(require,module,exports){
 /*
  * pkcs7.pad
  * https://github.com/brightcove/pkcs7
@@ -5403,10 +5402,10 @@ PADDING = [
 
 'use strict';
 
-exports.pad = require('./pad.js');
-exports.unpad = require('./unpad.js');
+exports.pad = require(22);
+exports.unpad = require(24);
 
-},{"./pad.js":22,"./unpad.js":24}],24:[function(require,module,exports){
+},{"22":22,"24":24}],24:[function(require,module,exports){
 /*
  * pkcs7.unpad
  * https://github.com/brightcove/pkcs7
@@ -17299,7 +17298,7 @@ vjs.plugin = function(name, init){
 },{}],26:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Basic Ad support plugin for video.js.
@@ -18121,10 +18120,10 @@ var
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],27:[function(require,module,exports){
+},{"25":25}],27:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 var
@@ -18356,10 +18355,10 @@ window.videojs.Hls.AacStream = function() {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],28:[function(require,module,exports){
+},{"25":25}],28:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  *
@@ -18730,10 +18729,10 @@ videojs.Hls.AsyncStream = AsyncStream;
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],29:[function(require,module,exports){
+},{"25":25}],29:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 
@@ -18888,10 +18887,10 @@ window.videojs.Hls.ExpGolomb = function(workingData) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],30:[function(require,module,exports){
+},{"25":25}],30:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * An object that stores the bytes of an FLV tag and methods for
@@ -19263,7 +19262,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],31:[function(require,module,exports){
+},{"25":25}],31:[function(require,module,exports){
 (function() {
   var
     H264ExtraData,
@@ -19481,7 +19480,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],32:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -19752,10 +19751,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],33:[function(require,module,exports){
+},{"25":25}],33:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Utilities for parsing M3U8 files. If the entire manifest is available,
@@ -20349,10 +20348,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],34:[function(require,module,exports){
+},{"25":25}],34:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Accepts program elementary stream (PES) data events and parses out
@@ -20568,10 +20567,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],35:[function(require,module,exports){
+},{"25":25}],35:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A state machine that manages the loading, caching, and updating of
@@ -21028,7 +21027,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],36:[function(require,module,exports){
+},{"25":25}],36:[function(require,module,exports){
 /**
  * Playlist related utilities.
  */
@@ -21330,7 +21329,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],37:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -21828,10 +21827,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],38:[function(require,module,exports){
+},{"25":25}],38:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A lightweight readable stream implemention that handles event dispatching.
@@ -21912,10 +21911,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],39:[function(require,module,exports){
+},{"25":25}],39:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  * videojs-hls
@@ -23219,10 +23218,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],40:[function(require,module,exports){
+},{"25":25}],40:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(videojs){
   /**
@@ -23314,10 +23313,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],41:[function(require,module,exports){
+},{"25":25}],41:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window){
   var urlCount = 0,
@@ -23615,10 +23614,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],42:[function(require,module,exports){
+},{"25":25}],42:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(25);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
 * videojs-ga - v0.4.2 - 2015-02-06
@@ -23773,7 +23772,7 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25}],43:[function(require,module,exports){
+},{"25":25}],43:[function(require,module,exports){
 /*! videojs-hlsjs - v0.0.0 - 2015-09-25
 * Copyright (c) 2015 benjipott; Licensed Apache-2.0 */
 /*! videojs-hls - v0.0.0 - 2015-9-24
@@ -23939,8 +23938,8 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 },{}],44:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
-require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js");
+; videojs = global.videojs = require(25);
+require(26);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Copyright 2014 Google Inc.
@@ -25059,7 +25058,7 @@ require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/nod
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":25,"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/videojs-contrib-ads/src/videojs.ads.js":26}],45:[function(require,module,exports){
+},{"25":25,"26":26}],45:[function(require,module,exports){
 (function (global){
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
@@ -25196,12 +25195,12 @@ vjs.plugin("persistvolume", volumePersister);
 // forth between JSON. If we don't then it's not that big of a deal since we're
 // off browser.
 module.exports = {
-  WebVTT: require("./vtt.js").WebVTT,
-  VTTCue: require("./vttcue-extended.js").VTTCue,
-  VTTRegion: require("./vttregion-extended.js").VTTRegion
+  WebVTT: require(47).WebVTT,
+  VTTCue: require(48).VTTCue,
+  VTTRegion: require(50).VTTRegion
 };
 
-},{"./vtt.js":47,"./vttcue-extended.js":48,"./vttregion-extended.js":50}],47:[function(require,module,exports){
+},{"47":47,"48":48,"50":50}],47:[function(require,module,exports){
 /**
  * Copyright 2013 vtt.js Contributors
  *
@@ -26695,7 +26694,7 @@ module.exports = {
 // If we're in Node.js then require VTTCue so we can extend it, otherwise assume
 // VTTCue is on the global.
 if (typeof module !== "undefined" && module.exports) {
-  this.VTTCue = this.VTTCue || require("./vttcue").VTTCue;
+  this.VTTCue = this.VTTCue || require(49).VTTCue;
 }
 
 // Extend VTTCue with methods to convert to JSON, from JSON, and construct a
@@ -26737,7 +26736,7 @@ if (typeof module !== "undefined" && module.exports) {
 
 }(this));
 
-},{"./vttcue":49}],49:[function(require,module,exports){
+},{"49":49}],49:[function(require,module,exports){
 /**
  * Copyright 2013 vtt.js Contributors
  *
@@ -27067,7 +27066,7 @@ if (typeof module !== "undefined" && module.exports) {
 // If we're in Node.js then require VTTRegion so we can extend it, otherwise assume
 // VTTRegion is on the global.
 if (typeof module !== "undefined" && module.exports) {
-  this.VTTRegion = require("./vttregion").VTTRegion;
+  this.VTTRegion = require(51).VTTRegion;
 }
 
 // Extend VTTRegion with methods to convert to JSON, from JSON, and construct a
@@ -27092,7 +27091,7 @@ if (typeof module !== "undefined" && module.exports) {
 
 }(this));
 
-},{"./vttregion":51}],51:[function(require,module,exports){
+},{"51":51}],51:[function(require,module,exports){
 /**
  * Copyright 2013 vtt.js Contributors
  *

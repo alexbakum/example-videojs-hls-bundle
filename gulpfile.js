@@ -4,43 +4,49 @@ var source = require('vinyl-source-stream');
 var gutil = require('gulp-util');
 var browserSync = require('browser-sync').create();
 var path = require('path');
+var collapse = require('bundle-collapser/plugin');
 
 //process.env.BROWSERIFYSHIM_DIAGNOSTICS=1;
 
 gulp.task('js:videojs', function () {
     return browserify()
-        .require(path.dirname(require.resolve('video.js')) + "/video.novtt.dev.js", {expose: 'video.js'})
+        .require(path.dirname(require.resolve('video.js')) + "/video.novtt.dev.js", {expose: 'video.js', fullPaths: false})
+        .plugin(collapse)
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:videojs-ads-ima-standalone', function () {
-    return browserify('./src/videojs.ads.ima/index.js')
+    return browserify('./src/videojs.ads.ima/index.js', { fullPaths: false })
         .exclude('video.js')
+        .plugin(collapse)
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.ads.ima.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:videojs-hls-standalone', function () {
-    return browserify('./src/videojs.hls/index.js')
+    return browserify('./src/videojs.hls/index.js', { fullPaths: false })
         .exclude('video.js')
+        .plugin(collapse)
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.hls.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:videojs-ga-standalone', function() {
-    return browserify('./src/videojs.ga/index.js')
+    return browserify('./src/videojs.ga/index.js', { fullPaths: false })
         .exclude('video.js')
+        .plugin(collapse)
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.ga.js'))
         .pipe(gulp.dest('./dist/js'));
 });
 gulp.task('js:videojs-bundle', function () {
-    return browserify('./src/videojs.bundle/index.js')
+    return browserify('./src/videojs.bundle/index.js', { fullPaths: false })
+        .plugin(collapse)
         .bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
         .pipe(source('videojs.bundle.js'))

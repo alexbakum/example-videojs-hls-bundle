@@ -1,25 +1,25 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
-global.pkcs7 = require('pkcs7');
+global.pkcs7 = require(3);
 
-require('contrib/media-sources');
-require('contrib/hls/videojs-hls');
-require('contrib/hls/stream');
-require('contrib/hls/flv-tag');
-require('contrib/hls/exp-golomb');
-require('contrib/hls/h264-extradata');
-require('contrib/hls/h264-stream');
-require('contrib/hls/aac-stream');
-require('contrib/hls/metadata-stream');
-require('contrib/hls/segment-parser');
-require('contrib/hls/m3u8/m3u8-parser');
-require('contrib/hls/xhr');
-require('contrib/hls/playlist');
-require('contrib/hls/playlist-loader');
-require('contrib/hls/decrypter');
+require(20);
+require(18);
+require(17);
+require(9);
+require(8);
+require(10);
+require(11);
+require(6);
+require(13);
+require(16);
+require(12);
+require(19);
+require(15);
+require(14);
+require(7);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"contrib/hls/aac-stream":6,"contrib/hls/decrypter":7,"contrib/hls/exp-golomb":8,"contrib/hls/flv-tag":9,"contrib/hls/h264-extradata":10,"contrib/hls/h264-stream":11,"contrib/hls/m3u8/m3u8-parser":12,"contrib/hls/metadata-stream":13,"contrib/hls/playlist":15,"contrib/hls/playlist-loader":14,"contrib/hls/segment-parser":16,"contrib/hls/stream":17,"contrib/hls/videojs-hls":18,"contrib/hls/xhr":19,"contrib/media-sources":20,"pkcs7":3}],2:[function(require,module,exports){
+},{"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"3":3,"6":6,"7":7,"8":8,"9":9}],2:[function(require,module,exports){
 /*
  * pkcs7.pad
  * https://github.com/brightcove/pkcs7
@@ -116,10 +116,10 @@ PADDING = [
 
 'use strict';
 
-exports.pad = require('./pad.js');
-exports.unpad = require('./unpad.js');
+exports.pad = require(2);
+exports.unpad = require(4);
 
-},{"./pad.js":2,"./unpad.js":4}],4:[function(require,module,exports){
+},{"2":2,"4":4}],4:[function(require,module,exports){
 /*
  * pkcs7.unpad
  * https://github.com/brightcove/pkcs7
@@ -12012,7 +12012,7 @@ vjs.plugin = function(name, init){
 },{}],6:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 var
@@ -12244,10 +12244,10 @@ window.videojs.Hls.AacStream = function() {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],7:[function(require,module,exports){
+},{"5":5}],7:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  *
@@ -12618,10 +12618,10 @@ videojs.Hls.AsyncStream = AsyncStream;
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],8:[function(require,module,exports){
+},{"5":5}],8:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
 
@@ -12776,10 +12776,10 @@ window.videojs.Hls.ExpGolomb = function(workingData) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],9:[function(require,module,exports){
+},{"5":5}],9:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * An object that stores the bytes of an FLV tag and methods for
@@ -13151,7 +13151,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],10:[function(require,module,exports){
+},{"5":5}],10:[function(require,module,exports){
 (function() {
   var
     H264ExtraData,
@@ -13369,7 +13369,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],11:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -13640,10 +13640,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],12:[function(require,module,exports){
+},{"5":5}],12:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Utilities for parsing M3U8 files. If the entire manifest is available,
@@ -14237,10 +14237,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],13:[function(require,module,exports){
+},{"5":5}],13:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * Accepts program elementary stream (PES) data events and parses out
@@ -14456,10 +14456,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],14:[function(require,module,exports){
+},{"5":5}],14:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A state machine that manages the loading, caching, and updating of
@@ -14916,7 +14916,7 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],15:[function(require,module,exports){
+},{"5":5}],15:[function(require,module,exports){
 /**
  * Playlist related utilities.
  */
@@ -15218,7 +15218,7 @@ hls.FlvTag.frameTime = function(tag) {
 },{}],16:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window) {
   var
@@ -15716,10 +15716,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],17:[function(require,module,exports){
+},{"5":5}],17:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /**
  * A lightweight readable stream implemention that handles event dispatching.
@@ -15800,10 +15800,10 @@ hls.FlvTag.frameTime = function(tag) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],18:[function(require,module,exports){
+},{"5":5}],18:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 /*
  * videojs-hls
@@ -17107,10 +17107,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],19:[function(require,module,exports){
+},{"5":5}],19:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(videojs){
   /**
@@ -17202,10 +17202,10 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}],20:[function(require,module,exports){
+},{"5":5}],20:[function(require,module,exports){
 (function (global){
 
-; videojs = global.videojs = require("/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js");
+; videojs = global.videojs = require(5);
 ; var __browserify_shim_require__=require;(function browserifyShim(module, define, require) {
 (function(window){
   var urlCount = 0,
@@ -17503,4 +17503,4 @@ resolveUrl = videojs.Hls.resolveUrl = function(basePath, path) {
 }).call(global, module, undefined, undefined);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"/home/andrew/projects/videojs-hls-bundle/example-videojs-hls-bundle/node_modules/video.js/dist/video-js/video.dev.js":5}]},{},[1]);
+},{"5":5}]},{},[1]);
